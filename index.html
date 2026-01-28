@@ -104,15 +104,17 @@
 
         const GRAVITY = 0.35;
         const DAMAGE_MULTIPLIER = 0.3;
-        const KNOCKBACK_X = 12;
-        const KNOCKBACK_Y = -9;
+        const KNOCKBACK_X = 3;
+        const KNOCKBACK_Y = -3;
         const SHOW_DEBUG_BOXES = false;
         const MAX_ROUNDS = 3;
-        const PLAYER_ACTION_COOLDOWN = 12;
-        const HURTBOX_STAND = { x: 0.30, y: 0.12, w: 0.40, h: 0.76 };
-        const HURTBOX_CROUCH = { x: 0.30, y: 0.52, w: 0.40, h: 0.36 };
-        const HURTBOX_AIR = { x: 0.32, y: 0.20, w: 0.36, h: 0.56 };
-        const HURTBOX_ATTACK = { x: 0.32, y: 0.18, w: 0.36, h: 0.64 };
+        const PLAYER_ACTION_COOLDOWN = 52;
+        const HADOKEN_COOLDOWN = 300;
+        const HURTBOX_STAND = { x: 0.33, y: 0.12, w: 0.32, h: 0.76 };
+        const HURTBOX_CROUCH = { x: 0.31, y: 0.4, w: 0.32, h: 0.47 };
+        const HURTBOX_AIR = { x: 0.34, y: 0.20, w: 0.32, h: 0.56 };
+        const HURTBOX_ATTACK = { x: 0.33, y: 0.12, w: 0.32, h: 0.76 };
+        const HURTBOX_FACING_OFFSET = 0.04;
         const GROUND_Y = 340;
         const SPRITE_WIDTH = 316;
         const SPRITE_HEIGHT = 345;
@@ -176,6 +178,7 @@
                 this.hitboxes = [];
                 this.gravityDisabled = false;
                 this.flyingKickCooldown = 0;
+                this.zCooldown = 0;
                 this.holdMove = null;
                 this.holdHitbox = null;
                 this.holdInputKey = null;
@@ -183,6 +186,9 @@
                 this.hurtCooldown = 0;
                 this.hitstun = 0;
                 this.actionCooldown = 0;
+                this.hadokenCooldown = 0;
+                this.actionCooldownScale = 1;
+                this.damageMultiplier = 1;
             }
 
             resetState(x, facingRight) {
@@ -202,10 +208,14 @@
                 this.holdHitbox = null;
                 this.holdInputKey = null;
                 this.flyingKickCooldown = 0;
+                this.zCooldown = 0;
                 this.hurtCooldown = 0;
                 this.health = 100;
                 this.hitstun = 0;
                 this.actionCooldown = 0;
+                this.hadokenCooldown = 0;
+                this.actionCooldownScale = 1;
+                this.damageMultiplier = 1;
             }
 
             setAnimation(animName) {
@@ -227,6 +237,9 @@
                 if (this.flyingKickCooldown > 0) {
                     this.flyingKickCooldown--;
                 }
+                if (this.zCooldown > 0) {
+                    this.zCooldown--;
+                }
                 if (this.hurtCooldown > 0) {
                     this.hurtCooldown--;
                 }
@@ -235,6 +248,9 @@
                 }
                 if (this.actionCooldown > 0) {
                     this.actionCooldown--;
+                }
+                if (this.hadokenCooldown > 0) {
+                    this.hadokenCooldown--;
                 }
 
                 // Gravity (unless disabled during certain moves)
@@ -266,6 +282,9 @@
                             this.frameIndex = anim.frames.length - 1;
                             this.animationLocked = false;
                             this.gravityDisabled = false; // Re-enable gravity when animation ends
+                            if (this.currentAnimation === 'flyingKick') {
+                                this.zCooldown = 120;
+                            }
                             if (this.holdMove !== this.currentAnimation) {
                                 this.setAnimation('idle');
                             }
@@ -289,72 +308,73 @@
                         if ((pressedKeys['a'] || pressedKeys['A']) && this.actionCooldown === 0) {
                             this.setAnimation('downPunch');
                             this.createHitbox(50, 130, 65, 40, 15, 4, 6);
-                            this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                            this.setActionCooldown();
                         }
                         // Crouch + S = Low Kick Forward
                         else if ((pressedKeys['s'] || pressedKeys['S']) && this.actionCooldown === 0) {
                             this.setAnimation('lowKickForward');
                             this.createHitbox(30, 195, 75, 25, 10, 5, 6);
-                            this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                            this.setActionCooldown();
                         }
                         // Crouch + X = Low Kick Back
                         else if ((pressedKeys['x'] || pressedKeys['X']) && this.actionCooldown === 0) {
                             this.setAnimation('lowKickBack');
                             this.createHitbox(-60, 195, 120, 25, 12, 5, 6);
-                            this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                            this.setActionCooldown();
                         }
                         // Crouch + Z = Roll Forward
                         else if ((pressedKeys['z'] || pressedKeys['Z']) && this.actionCooldown === 0) {
                             this.setAnimation('rollForward');
                             this.velocityX = this.facingRight ? 8 : -8;
                             this.createHitbox(60, 40, 80, 60, 0, 4, 10);
-                            this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                            this.setActionCooldown();
                         }
                     }
                     // Ground Attacks (check after crouch so down combos win)
-                    else if ((pressedKeys['q'] || pressedKeys['Q']) && this.actionCooldown === 0) {
+                    else if ((pressedKeys['q'] || pressedKeys['Q']) && this.actionCooldown === 0 && this.hadokenCooldown === 0) {
                         if (this.isGrounded) {
                             this.setAnimation('hadoken');
                             this.createProjectile();
-                            this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                            this.setActionCooldown();
+                            this.hadokenCooldown = HADOKEN_COOLDOWN;
                         }
                     }
                     else if ((pressedKeys['w'] || pressedKeys['W']) && this.actionCooldown === 0) {
                         if (this.isGrounded) {
                             this.setAnimation('upperJabRotation');
                             this.createHitbox(-25, -25, 70, 90, 20, 6, 10);
-                            this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                            this.setActionCooldown();
                         }
                     }
                     else if ((pressedKeys['a'] || pressedKeys['A']) && this.actionCooldown === 0) {
                         if (this.isGrounded) {
                             this.setAnimation('forwardPunch');
-                            this.createHitbox(40, 40, 70, 60, 12, 4, 12);
-                            this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                            this.createHitbox(55, 55, 40, 40, 9, 4, 10);
+                            this.setActionCooldown();
                         }
                     }
                     else if ((pressedKeys['s'] || pressedKeys['S']) && this.actionCooldown === 0) {
                         if (this.isGrounded) {
                             this.setAnimation('directHighKick');
                             this.createHitbox(10, 30, 50, 70, 10, 4, 8);
-                            this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                            this.setActionCooldown();
                         }
                     }
                     else if ((pressedKeys['z'] || pressedKeys['Z']) && this.actionCooldown === 0) {
-                        if (this.isGrounded && this.flyingKickCooldown === 0) {
+                        if (this.isGrounded && this.flyingKickCooldown === 0 && this.zCooldown === 0) {
                             this.setAnimation('flyingKick');
                             this.velocityX = this.facingRight ? 8 : -8;
                             this.velocityY = -5;
-                            this.createHitbox(-25, 90, 120, 40, 25, 4, 24, true);
+                            this.createHitbox(-25, 90, 120, 40, 16, 4, 24, true);
                             this.flyingKickCooldown = 150; // 2.5 seconds at 60fps
-                            this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                            this.setActionCooldown();
                         }
                     }
                     else if ((pressedKeys['x'] || pressedKeys['X']) && this.actionCooldown === 0) {
                         if (this.isGrounded) {
                             this.setAnimation('roundKickHigh');
                             this.createHitbox(-10, -30, 20, 90, 18, 6, 12);
-                            this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                            this.setActionCooldown();
                         }
                     }
                     // Jump
@@ -382,42 +402,42 @@
                 // Air attacks (can be performed even if animation is locked)
                 if (!this.isGrounded && !this.animationLocked && this.hitstun === 0) {
                     // Air + Z = Flying Kick (lock height - disable gravity)
-                    if ((pressedKeys['z'] || pressedKeys['Z']) && this.flyingKickCooldown === 0 && this.actionCooldown === 0) {
+                    if ((pressedKeys['z'] || pressedKeys['Z']) && this.flyingKickCooldown === 0 && this.actionCooldown === 0 && this.zCooldown === 0) {
                         this.velocityY = 0; // Lock current height
                         this.gravityDisabled = true; // Disable gravity during flying kick
                         this.setAnimation('flyingKick');
                         this.velocityX = this.facingRight ? 8 : -8;
-                        this.createHitbox(-25, 90, 120, 40, 25, 4, 24, true);
+                        this.createHitbox(-25, 90, 120, 40, 15, 4, 16, true);
                         this.flyingKickCooldown = 150; // 2.5 seconds at 60fps
-                        this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                        this.setActionCooldown();
                     }
                     // Air + A (with forward direction) = Jump Forward Kick
                     // Air + A = Punch (hold)
                     else if ((keys['a'] || keys['A']) && this.actionCooldown === 0) {
                         this.startHoldMove('jumpDownPunch', {
-                            offsetX: 0, offsetY: 200, width: 30, height: 30, damage: 20, startup: 4
+                            offsetX: 0, offsetY: 200, width: 30, height: 30, damage: 24, startup: 4
                         }, 'a');
-                        this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                        this.setActionCooldown();
                     }
                     // Air + S (with direction) = Forward Kick (hold)
                     else if ((keys['s'] || keys['S']) && (keys['ArrowRight'] || keys['ArrowLeft']) && this.actionCooldown === 0) {
                         this.startHoldMove('forwardJumpKick', {
-                            offsetX: 70, offsetY: 145, width: 30, height: 40, damage: 18, startup: 4
+                            offsetX: 70, offsetY: 145, width: 30, height: 40, damage: 22, startup: 4
                         }, 's');
-                        this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                        this.setActionCooldown();
                     }
                     // Air + S (neutral) = Jump Kick (hold)
                     else if ((keys['s'] || keys['S']) && this.actionCooldown === 0) {
                         this.startHoldMove('upJumpKick', {
-                            offsetX: 0, offsetY: 55, width: 45, height: 30, damage: 16, startup: 4
+                            offsetX: 0, offsetY: 55, width: 45, height: 30, damage: 20, startup: 4
                         }, 's');
-                        this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                        this.setActionCooldown();
                     }
                     // Air + W = Direct High Kick
                     else if ((pressedKeys['w'] || pressedKeys['W']) && this.actionCooldown === 0) {
                         this.setAnimation('directHighKick');
-                        this.createHitbox(30, 25, 30, 30, 22, 4, 8);
-                        this.actionCooldown = PLAYER_ACTION_COOLDOWN;
+                        this.createHitbox(30, 25, 30, 30, 26, 4, 8);
+                        this.setActionCooldown();
                     }
                 }
                 
@@ -451,7 +471,7 @@
                     y: this.y + offsetY,
                     width: width,
                     height: height,
-                    damage: damage,
+                    damage: damage * this.damageMultiplier,
                     startup: startup,
                     lifetime: lifetime,
                     followPlayer: followPlayer,
@@ -465,7 +485,7 @@
                     this.x + (this.facingRight ? this.width : 0),
                     this.y + 60,
                     this.facingRight ? 12 : -12,
-                    20,
+                    20 * this.damageMultiplier,
                     this
                 );
                 projectiles.push(projectile);
@@ -496,6 +516,13 @@
 
                     return hitbox.lifetime > 0;
                 });
+            }
+
+            setActionCooldown() {
+                this.actionCooldown = Math.max(
+                    this.actionCooldown,
+                    Math.floor(PLAYER_ACTION_COOLDOWN * this.actionCooldownScale)
+                );
             }
 
             startHoldMove(animName, hitboxSpec, holdKey) {
@@ -566,8 +593,9 @@
                     spec = HURTBOX_ATTACK;
                 }
 
+                const facingOffset = this.facingRight ? -HURTBOX_FACING_OFFSET : HURTBOX_FACING_OFFSET;
                 return {
-                    x: this.x + this.width * spec.x,
+                    x: this.x + this.width * (spec.x + facingOffset),
                     y: this.y + this.height * spec.y,
                     width: this.width * spec.w,
                     height: this.height * spec.h
@@ -649,7 +677,11 @@
                 this.gravityDisabled = false;
 
                 if (source) {
-                    const direction = source.x < this.x ? 1 : -1;
+                    let direction = source.x < this.x ? 1 : -1;
+                    const nearLeftWall = this.x < 40;
+                    const nearRightWall = this.x > canvas.width - this.width - 40;
+                    if (nearLeftWall && direction < 0) direction = 1;
+                    if (nearRightWall && direction > 0) direction = -1;
                     this.velocityX = direction * KNOCKBACK_X;
                     this.velocityY = Math.min(this.velocityY, KNOCKBACK_Y);
                     this.isGrounded = false;
@@ -664,21 +696,56 @@
                 super(x, y, sprite);
                 this.aiKeys = {};
                 this.aiPressed = {};
-                this.attackCooldown = 0;
-                this.jumpCooldown = 0;
+                this.health = 100;
+                this.speed = 4.5;
+                this.jumpPower = 17;
+                this.actionCooldownScale = 0.5;
+                this.damageMultiplier = .8;
+                this.attackCooldown = 300;
+                this.jumpCooldown = 50;
                 this.decisionTimer = 0;
                 this.holdTimer = 0;
                 this.holdKey = null;
+                this.escapeCooldown = 0;
+                this.panicTimer = 0;
+                this.lastX = x;
+                this.stuckTimer = 0;
+                this.evadeCooldown = 0;
+                this.lastPlayerMove = null;
+                this.repeatCount = 0;
             }
 
             resetAI() {
                 this.aiKeys = {};
                 this.aiPressed = {};
-                this.attackCooldown = 0;
-                this.jumpCooldown = 0;
+                this.health = 100;
+                this.speed = 4.5;
+                this.jumpPower = 17;
+                this.actionCooldownScale = 0.5;
+                this.damageMultiplier = .8;
+                this.attackCooldown = 300;
+                this.jumpCooldown = 50;
                 this.decisionTimer = 0;
                 this.holdTimer = 0;
                 this.holdKey = null;
+                this.escapeCooldown = 0;
+                this.panicTimer = 0;
+                this.lastX = this.x;
+                this.stuckTimer = 0;
+                this.evadeCooldown = 0;
+                this.lastPlayerMove = null;
+                this.repeatCount = 0;
+            }
+
+            takeDamage(damage, source = null) {
+                const prevHealth = this.health;
+                super.takeDamage(damage * 0.8, source);
+                if (this.health < prevHealth) {
+                    this.panicTimer = 35;
+                    this.escapeCooldown = Math.max(this.escapeCooldown, 45);
+                    this.hitstun = Math.max(0, this.hitstun - 8);
+                    this.hurtCooldown = Math.max(0, this.hurtCooldown - 5);
+                }
             }
 
             updateAI(player, objects) {
@@ -686,6 +753,9 @@
                 if (this.jumpCooldown > 0) this.jumpCooldown--;
                 if (this.decisionTimer > 0) this.decisionTimer--;
                 if (this.holdTimer > 0) this.holdTimer--;
+                if (this.escapeCooldown > 0) this.escapeCooldown--;
+                if (this.panicTimer > 0) this.panicTimer--;
+                if (this.evadeCooldown > 0) this.evadeCooldown--;
 
                 this.aiKeys = {};
                 this.aiPressed = {};
@@ -693,6 +763,51 @@
                 const distance = player.x - this.x;
                 const absDistance = Math.abs(distance);
                 this.facingRight = distance >= 0;
+                const targetBox = player.getHurtbox ? player.getHurtbox() : player;
+                const myCenterX = this.x + this.width * 0.5;
+                const targetCenterX = targetBox.x + targetBox.width * 0.5;
+                const dx = targetCenterX - myCenterX;
+                const absDx = Math.abs(dx);
+                const dy = (targetBox.y + targetBox.height * 0.5) - (this.y + this.height * 0.5);
+                const inFront = this.facingRight ? dx > 0 : dx < 0;
+                const strikeRangeGround = inFront && absDx < 200;
+                const strikeRangeAir = inFront && absDx < 180 && dy < 80;
+                const nearLeftWall = this.x < 40;
+                const nearRightWall = this.x > canvas.width - this.width - 40;
+                const cornered = (nearLeftWall || nearRightWall) && absDistance < 160;
+                const playerAttacking = player.animationLocked || player.hitboxes.length > 0 || player.holdHitbox;
+                const playerHitThreat = player.hitboxes.length > 0 || player.holdHitbox;
+                if (player.currentAnimation === this.lastPlayerMove && playerAttacking) {
+                    this.repeatCount++;
+                } else {
+                    this.repeatCount = 0;
+                    this.lastPlayerMove = player.currentAnimation;
+                }
+                let avoidHitbox = false;
+                if (playerHitThreat) {
+                    const activeBox = player.holdHitbox && player.holdHitbox.startup <= 0 ? player.holdHitbox : player.hitboxes[0];
+                    if (activeBox) {
+                        const pad = 40;
+                        const inRangeX = this.x + this.width > activeBox.x - pad && this.x < activeBox.x + activeBox.width + pad;
+                        const inRangeY = this.y + this.height > activeBox.y - pad && this.y < activeBox.y + activeBox.height + pad;
+                        avoidHitbox = inRangeX && inRangeY;
+                    }
+                }
+                let escapeDir = null;
+                if (nearLeftWall) {
+                    escapeDir = 'ArrowRight';
+                } else if (nearRightWall) {
+                    escapeDir = 'ArrowLeft';
+                } else if (this.panicTimer > 0) {
+                    escapeDir = distance > 0 ? 'ArrowLeft' : 'ArrowRight';
+                }
+
+                if (Math.abs(this.x - this.lastX) < 0.5 && cornered) {
+                    this.stuckTimer++;
+                } else {
+                    this.stuckTimer = 0;
+                }
+                this.lastX = this.x;
 
                 // Keep holding air attacks while airborne
                 if (!this.isGrounded && this.holdTimer > 0 && this.holdKey) {
@@ -700,6 +815,65 @@
                     if (this.holdTimer === 1) {
                         this.holdKey = null;
                     }
+                    return this.update(this.aiKeys, this.aiPressed, objects);
+                }
+
+                // Corner escape logic
+                if (escapeDir && (cornered || this.panicTimer > 0)) {
+                    this.aiKeys[escapeDir] = true;
+                    if (this.isGrounded && this.escapeCooldown === 0) {
+                        if (!avoidHitbox && this.flyingKickCooldown === 0 && this.actionCooldown === 0 && Math.random() < 0.75) {
+                            this.pressKey('z');
+                        } else if (this.jumpCooldown === 0) {
+                            this.pressKey('ArrowUp');
+                            this.jumpCooldown = 50;
+                        }
+                        this.escapeCooldown = 90;
+                    }
+                }
+                if (cornered && this.stuckTimer > 20 && this.isGrounded) {
+                    this.aiKeys[escapeDir] = true;
+                    this.velocityX = escapeDir === 'ArrowRight' ? 6 : -6;
+                    this.hurtCooldown = Math.max(this.hurtCooldown, 10);
+                    if (this.jumpCooldown === 0) {
+                        if (!avoidHitbox && this.flyingKickCooldown === 0 && this.actionCooldown === 0 && Math.random() < 0.9) {
+                            this.pressKey('z');
+                        } else {
+                            this.pressKey('ArrowUp');
+                        }
+                        this.jumpCooldown = 35;
+                    }
+                    this.escapeCooldown = 120;
+                }
+                if (cornered || this.panicTimer > 0) {
+                    return this.update(this.aiKeys, this.aiPressed, objects);
+                }
+
+                // Emergency evade when pressured up close
+                if (absDistance < 110 && playerAttacking && this.evadeCooldown === 0) {
+                    const retreatDir = distance > 0 ? 'ArrowLeft' : 'ArrowRight';
+                    this.aiKeys[retreatDir] = true;
+                    if (this.jumpCooldown === 0 && Math.random() < 0.5) {
+                        this.pressKey('ArrowUp');
+                        this.jumpCooldown = 45;
+                    } else if (!avoidHitbox && this.flyingKickCooldown === 0 && this.actionCooldown === 0 && Math.random() < 0.3) {
+                        this.pressKey('z');
+                    }
+                    this.evadeCooldown = 40;
+                    return this.update(this.aiKeys, this.aiPressed, objects);
+                }
+
+                if (this.repeatCount > 12 && absDistance < 170) {
+                    const retreatDir = distance > 0 ? 'ArrowLeft' : 'ArrowRight';
+                    this.aiKeys[retreatDir] = true;
+                    if (this.attackCooldown === 0 && !avoidHitbox) {
+                        this.pressKey('w');
+                        this.attackCooldown = 24;
+                    } else if (this.jumpCooldown === 0) {
+                        this.pressKey('ArrowUp');
+                        this.jumpCooldown = 35;
+                    }
+                    this.evadeCooldown = 30;
                     return this.update(this.aiKeys, this.aiPressed, objects);
                 }
 
@@ -719,35 +893,51 @@
                 }
 
                 if (this.decisionTimer === 0 && this.isGrounded) {
-                    this.decisionTimer = 20;
+                    this.decisionTimer = 12;
 
-                    if (this.attackCooldown === 0 && absDistance < 180) {
-                        const roll = Math.random();
-                        if (roll < 0.35) {
+                    if (!playerAttacking && this.attackCooldown === 0 && absDistance < 300 && this.actionCooldown === 0) {
+                        if (this.flyingKickCooldown === 0 && strikeRangeGround && Math.random() < 0.55) {
+                            this.pressKey('z');
+                            this.attackCooldown = 16;
+                        } else if (strikeRangeGround && Math.random() < 0.7) {
                             this.pressKey('a');
-                        } else if (roll < 0.6) {
+                            this.attackCooldown = 16;
+                        } else if (this.hadokenCooldown === 0 && absDistance > 180 && Math.random() < 0.35) {
+                            this.pressKey('q');
+                            this.attackCooldown = 20;
+                        }
+                    } else if (!playerAttacking && this.attackCooldown === 0 && strikeRangeGround && this.flyingKickCooldown === 0 && this.actionCooldown === 0 && Math.random() < 0.65) {
+                        this.pressKey('z');
+                        this.attackCooldown = 28;
+                    } else if (this.attackCooldown === 0 && strikeRangeGround) {
+                        const roll = Math.random();
+                        if (roll < 0.36) {
+                            this.pressKey('a');
+                        } else if (roll < 0.56) {
+                            this.pressKey('w');
+                        } else if (roll < 0.78) {
                             this.pressKey('s');
-                        } else if (roll < 0.75) {
+                        } else if (roll < 0.9) {
                             this.pressKey('x');
-                        } else if (roll < 0.9 && this.flyingKickCooldown === 0) {
+                        } else if (roll < 0.98 && this.flyingKickCooldown === 0) {
                             this.pressKey('z');
                         } else {
-                            this.pressKey('w');
+                            this.pressKey('a');
                         }
-                        this.attackCooldown = 150;
-                    } else if (this.jumpCooldown === 0 && absDistance < 260 && Math.random() < 0.35) {
+                        this.attackCooldown = 28;
+                    } else if (this.jumpCooldown === 0 && absDistance < 320 && Math.random() < (playerAttacking ? 0.6 : 0.2)) {
                         this.pressKey('ArrowUp');
-                        this.jumpCooldown = 50;
+                        this.jumpCooldown = 30;
                     }
                 }
 
                 // Air attacks
                 if (!this.isGrounded) {
-                    if (absDistance < 200 && (Math.random() < 0.5 || this.holdKey)) {
+                    if (strikeRangeAir && (Math.random() < 0.5 || this.holdKey)) {
                         this.aiKeys['a'] = true;
                         this.holdKey = 'a';
                         this.holdTimer = 30;
-                    } else if (absDistance < 220) {
+                    } else if (strikeRangeAir) {
                         this.aiKeys['s'] = true;
                         this.holdKey = 's';
                         this.holdTimer = 24;
@@ -787,6 +977,7 @@
 
                 // Check collision with objects
                 objects.forEach(obj => {
+                    if (obj === this.owner) return;
                     const targetBox = obj.getHurtbox ? obj.getHurtbox() : obj;
                     if (obj.health > 0 && this.checkCollision(targetBox)) {
                         obj.takeDamage(this.damage, this.owner);
@@ -1178,7 +1369,7 @@
             
             if (roundActive) {
                 projectiles.forEach((proj, index) => {
-                    proj.update([enemy, ...objects]);
+                    proj.update([player, enemy, ...objects]);
                     if (!proj.active) {
                         projectiles.splice(index, 1);
                     }
