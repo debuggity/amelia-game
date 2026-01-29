@@ -13,7 +13,7 @@
 
         body {
             overflow: hidden;
-            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 100%);
+            background: linear-gradient(to bottom, #2c012a 0%, #080808 100%);
             font-family: 'Courier New', monospace;
             height: 100vh;
             display: flex;
@@ -23,7 +23,7 @@
 
         #gameCanvas {
             display: block;
-            background: linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 70%, #8B7355 70%, #654321 100%);
+            background: linear-gradient(to bottom, #2c012a 0%, #080808 70%, #8B7355 70%, #654321 100%);
             image-rendering: pixelated;
             image-rendering: crisp-edges;
         }
@@ -120,11 +120,17 @@
         const SPRITE_HEIGHT = 345;
         const FRAMES_PER_ROW = 8;
 
-        // Load sprite sheets
+        // Load images
         const spriteSheet = new Image();
         spriteSheet.src = 'amelia-sprite-sheet.png';
         const enemySpriteSheet = new Image();
-        enemySpriteSheet.src = 'enemy-1-sprite-sheet.png';
+        enemySpriteSheet.src = 'sand-sheet.png';
+        //'starmer-sprite-sheet.png'
+        //'meme-police-sheet.png'
+        const sceneImage = new Image();
+        sceneImage.src = 'scene-1.png';
+        const sceneForeground = new Image();
+        sceneForeground.src = 'scene-1-foreground.png';
 
         // Animation definitions
         const animations = {
@@ -610,6 +616,27 @@
             }
 
             draw() {
+                // Shadow
+                const groundY = GROUND_Y + this.height * 0.72;
+                const maxJump = 220;
+                const airOffset = Math.min(maxJump, Math.max(0, GROUND_Y - this.y));
+                const shadowScale = 1 - (airOffset / maxJump) * 0.5;
+                const shadowWidth = this.width * 0.45 * shadowScale;
+                const shadowHeight = this.height * 0.08 * shadowScale;
+
+                ctx.save();
+                const shadowGradient = ctx.createRadialGradient(
+                    this.x + this.width / 2, groundY, shadowWidth * 0.1,
+                    this.x + this.width / 2, groundY, shadowWidth
+                );
+                shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
+                shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = shadowGradient;
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width / 2, groundY + 32, shadowWidth, shadowHeight, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
                 const anim = animations[this.currentAnimation];
                 const frameNumber = anim.frames[this.frameIndex];
                 const row = Math.floor(frameNumber / FRAMES_PER_ROW);
@@ -1193,14 +1220,7 @@
         let matchOver = false;
         const projectiles = [];
         const debris = [];
-        const objects = [
-            new Crate(500, GROUND_Y - 60),
-            new Crate(580, GROUND_Y - 60),
-            new Crate(540, GROUND_Y - 120),
-            new TrainingDummy(800, GROUND_Y - 120),
-            new Crate(950, GROUND_Y - 60),
-            new Crate(1020, GROUND_Y - 60)
-        ];
+        const objects = [];
 
         // Input handling
         const keys = {};
@@ -1322,24 +1342,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             // Draw background
-            // Sky
-            const skyGradient = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
-            skyGradient.addColorStop(0, '#87CEEB');
-            skyGradient.addColorStop(1, '#E0F6FF');
-            ctx.fillStyle = skyGradient;
-            ctx.fillRect(0, 0, canvas.width, GROUND_Y);
-
-            // Ground
-            ctx.fillStyle = '#8B7355';
-            ctx.fillRect(0, GROUND_Y, canvas.width, canvas.height - GROUND_Y);
-            
-            // Ground detail
-            ctx.strokeStyle = '#654321';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(0, GROUND_Y);
-            ctx.lineTo(canvas.width, GROUND_Y);
-            ctx.stroke();
+            ctx.drawImage(sceneImage, 0, 0, canvas.width, canvas.height);
 
             // Update and draw
             if (!matchOver) {
@@ -1392,6 +1395,7 @@
             player.draw();
             enemy.draw();
             drawHud();
+            ctx.drawImage(sceneForeground, 0, 0, canvas.width, canvas.height);
 
             // Debug info
             const debugInfo = document.getElementById('debug');
@@ -1442,7 +1446,7 @@
         let assetsLoaded = 0;
         const tryStart = () => {
             assetsLoaded++;
-            if (assetsLoaded === 2) {
+            if (assetsLoaded === 4) {
                 startRound();
                 gameLoop();
             }
@@ -1450,6 +1454,8 @@
 
         spriteSheet.onload = tryStart;
         enemySpriteSheet.onload = tryStart;
+        sceneImage.onload = tryStart;
+        sceneForeground.onload = tryStart;
 
         // Error handling for sprite sheets
         const showSpriteError = (fileName) => {
@@ -1460,7 +1466,9 @@
         };
 
         spriteSheet.onerror = () => showSpriteError('amelia-sprite-sheet.png');
-        enemySpriteSheet.onerror = () => showSpriteError('enemy-1-sprite-sheet.png');
+        enemySpriteSheet.onerror = () => showSpriteError('sand-sheet.png'); //'starmer-sprite-sheet.png' //'meme-police-sheet'
+        sceneImage.onerror = () => showSpriteError('scene-1.png');
+        sceneForeground.onerror = () => showSpriteError('scene-1-foreground.png');
     </script>
 </body>
 </html>
