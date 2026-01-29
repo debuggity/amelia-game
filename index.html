@@ -103,10 +103,11 @@
         canvas.height = 600;
 
         const GRAVITY = 0.35;
+        const FALL_GRAVITY_MULTIPLIER = 0.6;
         const DAMAGE_MULTIPLIER = 0.3;
-        const KNOCKBACK_X = 3;
+        const KNOCKBACK_X = 5;
         const KNOCKBACK_Y = -3;
-        const SHOW_DEBUG_BOXES = false;
+        const SHOW_DEBUG_BOXES = true;
         const MAX_ROUNDS = 3;
         const PLAYER_ACTION_COOLDOWN = 52;
         const HADOKEN_COOLDOWN = 300;
@@ -261,7 +262,8 @@
 
                 // Gravity (unless disabled during certain moves)
                 if (!this.gravityDisabled) {
-                    this.velocityY += GRAVITY;
+                    const gravity = this.velocityY > 0 ? GRAVITY * FALL_GRAVITY_MULTIPLIER : GRAVITY;
+                    this.velocityY += gravity;
                 }
                 this.y += this.velocityY;
 
@@ -313,7 +315,7 @@
                         // Crouch + A = Down Punch
                         if ((pressedKeys['a'] || pressedKeys['A']) && this.actionCooldown === 0) {
                             this.setAnimation('downPunch');
-                            this.createHitbox(50, 130, 65, 40, 15, 4, 6);
+                            this.createHitbox(50, 130, 65, 65, 15, 4, 6);
                             this.setActionCooldown();
                         }
                         // Crouch + S = Low Kick Forward
@@ -362,7 +364,7 @@
                     else if ((pressedKeys['s'] || pressedKeys['S']) && this.actionCooldown === 0) {
                         if (this.isGrounded) {
                             this.setAnimation('directHighKick');
-                            this.createHitbox(10, 30, 50, 70, 10, 4, 8);
+                            this.createHitbox(10, 30, 60, 70, 20, 4, 8);
                             this.setActionCooldown();
                         }
                     }
@@ -684,11 +686,6 @@
                     ctx.strokeRect(hurtbox.x, hurtbox.y, hurtbox.width, hurtbox.height);
                 }
 
-                // Draw health bar
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-                ctx.fillRect(this.x, this.y - 20, this.width, 10);
-                ctx.fillStyle = this.health > 30 ? '#00FF00' : '#FF0000';
-                ctx.fillRect(this.x, this.y - 20, this.width * (this.health / 100), 10);
             }
 
             takeDamage(damage, source = null) {
@@ -725,9 +722,14 @@
                 this.aiPressed = {};
                 this.health = 100;
                 this.speed = 4.5;
-                this.jumpPower = 17;
-                this.actionCooldownScale = 0.5;
-                this.damageMultiplier = .8;
+                this.jumpPower = 16;
+                this.actionCooldownScale = 1;
+                this.damageMultiplier = .75;
+                this.maxHealth = this.health;
+                this.baseSpeed = this.speed;
+                this.baseJumpPower = this.jumpPower;
+                this.baseActionCooldownScale = this.actionCooldownScale;
+                this.baseDamageMultiplier = this.damageMultiplier;
                 this.attackCooldown = 300;
                 this.jumpCooldown = 50;
                 this.decisionTimer = 0;
@@ -745,11 +747,11 @@
             resetAI() {
                 this.aiKeys = {};
                 this.aiPressed = {};
-                this.health = 100;
-                this.speed = 4.5;
-                this.jumpPower = 17;
-                this.actionCooldownScale = 0.5;
-                this.damageMultiplier = .8;
+                this.health = this.maxHealth;
+                this.speed = this.baseSpeed;
+                this.jumpPower = this.baseJumpPower;
+                this.actionCooldownScale = this.baseActionCooldownScale;
+                this.damageMultiplier = this.baseDamageMultiplier;
                 this.attackCooldown = 300;
                 this.jumpCooldown = 50;
                 this.decisionTimer = 0;
@@ -762,6 +764,15 @@
                 this.evadeCooldown = 0;
                 this.lastPlayerMove = null;
                 this.repeatCount = 0;
+            }
+
+            resetState(x, facingRight) {
+                super.resetState(x, facingRight);
+                this.health = this.maxHealth;
+                this.speed = this.baseSpeed;
+                this.jumpPower = this.baseJumpPower;
+                this.actionCooldownScale = this.baseActionCooldownScale;
+                this.damageMultiplier = this.baseDamageMultiplier;
             }
 
             takeDamage(damage, source = null) {
@@ -1295,6 +1306,24 @@
                 canvas.width - 20 - faceSize, 14,
                 faceSize, faceSize
             );
+
+            const barWidth = 360;
+            const barHeight = 12;
+            const barY = 18;
+            const playerMax = 100;
+            const enemyMax = 100;
+            const playerPct = Math.max(0, Math.min(1, player.health / playerMax));
+            const enemyPct = Math.max(0, Math.min(1, enemy.health / enemyMax));
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(70, barY, barWidth, barHeight);
+            ctx.fillRect(canvas.width - 70 - barWidth, barY, barWidth, barHeight);
+
+            ctx.fillStyle = playerPct > 0.3 ? '#00FF66' : '#FF3333';
+            ctx.fillRect(70, barY, barWidth * playerPct, barHeight);
+
+            ctx.fillStyle = enemyPct > 0.3 ? '#FF6666' : '#FF3333';
+            ctx.fillRect(canvas.width - 70 - barWidth * enemyPct, barY, barWidth * enemyPct, barHeight);
 
             for (let i = 0; i < MAX_ROUNDS; i++) {
                 const x = 80 + i * 20;
