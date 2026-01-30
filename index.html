@@ -123,15 +123,15 @@
 
         // Load images
         const spriteSheet = new Image();
-        spriteSheet.src = 'amelia-sprite-sheet.png';
+        spriteSheet.src = 'amelia-2-sprite-sheet.png';
         const enemySpriteSheet = new Image();
-        enemySpriteSheet.src = 'sand-sheet.png';
+        enemySpriteSheet.src = 'meme-police-sheet.png';
         //'starmer-sprite-sheet.png'
-        //'meme-police-sheet.png'
+        //'sand-sheet.png'
         const sceneImage = new Image();
-        sceneImage.src = 'scene-1.png';
+        sceneImage.src = 'scene-3.png';
         const sceneForeground = new Image();
-        sceneForeground.src = 'scene-1-foreground.png';
+        sceneForeground.src = 'scene-3-foreground.png';
 
         // Animation definitions
         const animations = {
@@ -1495,9 +1495,9 @@
         };
 
         spriteSheet.onerror = () => showSpriteError('amelia-sprite-sheet.png');
-        enemySpriteSheet.onerror = () => showSpriteError('sand-sheet.png'); //'starmer-sprite-sheet.png' //'meme-police-sheet'
-        sceneImage.onerror = () => showSpriteError('scene-1.png');
-        sceneForeground.onerror = () => showSpriteError('scene-1-foreground.png');
+        enemySpriteSheet.onerror = () => showSpriteError('meme-police-sheet.png'); //'starmer-sprite-sheet.png' //'meme-police-sheet'
+        sceneImage.onerror = () => showSpriteError('scene-3.png');
+        sceneForeground.onerror = () => showSpriteError('scene-3-foreground.png');
     </script>
 </body>
 </html>
