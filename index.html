@@ -1,0 +1,2563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Street Fighter Style Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: radial-gradient(circle at 20% 15%, rgba(170, 80, 235, 0.6), transparent 48%),
+                        radial-gradient(circle at 80% 12%, rgba(110, 30, 150, 0.55), transparent 55%),
+                        radial-gradient(circle at 50% 85%, rgba(70, 20, 100, 0.45), transparent 60%),
+                        linear-gradient(180deg, #2f1142 0%, #1e0a2a 55%, #120714 100%);
+            font-family: 'Courier New', monospace;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: linear-gradient(to bottom, #2c012a 0%, #080808 70%, #8B7355 70%, #654321 100%);
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        #gameWrapper {
+            position: relative;
+            width: fit-content;
+            height: fit-content;
+        }
+
+        #uiRoot {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .screen {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 18px;
+            background: rgba(0, 0, 0, 0.55);
+            color: white;
+            pointer-events: auto;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .menu-button,
+        .select-button,
+        .start-button,
+        .close-button,
+        .back-button {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .menu-button img,
+        .select-button img,
+        .start-button img,
+        .close-button img,
+        .back-button img {
+            display: block;
+            width: 280px;
+            height: auto;
+            border-radius: 8px;
+        }
+
+        #btnSkirmishContinue img,
+        #btnSkirmishStart img {
+            width: 220px;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 48px;
+            left: 48px;
+            z-index: 6;
+        }
+
+        .back-button img {
+            width: 110px;
+        }
+
+        #globalBack {
+            position: fixed;
+            top: 32px;
+            left: 32px;
+            z-index: 10;
+            display: none;
+            pointer-events: auto;
+        }
+
+        .menu-button:hover,
+        .select-button:hover,
+        .start-button:hover,
+        .close-button:hover,
+        .back-button:hover {
+            transform: translateY(-2px) scale(1.02);
+            filter: brightness(1.08);
+        }
+
+        .menu-button:active,
+        .select-button:active,
+        .start-button:active,
+        .close-button:active,
+        .back-button:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .select-button.selected img,
+        .menu-button.selected img,
+        .start-button.selected img {
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.9), 0 0 18px rgba(255, 215, 0, 0.5);
+            filter: brightness(1.12);
+        }
+
+        #skirmishScreen .player-card .select-button.selected img {
+            box-shadow: 0 0 0 3px rgba(0, 255, 120, 0.9), 0 0 18px rgba(0, 255, 120, 0.5);
+        }
+
+        #skirmishScreen .enemy-card .select-button.selected img {
+            box-shadow: 0 0 0 3px rgba(255, 60, 60, 0.9), 0 0 18px rgba(255, 60, 60, 0.5);
+        }
+        .select-row {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .select-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0);
+            width: fit-content;
+            align-self: flex-start;
+        }
+
+        .select-card img {
+            width: 160px;
+            height: auto;
+        }
+
+        #skirmishScreen [data-player] img,
+        #skirmishScreen [data-enemy] img {
+            height: 140px;
+            width: auto;
+        }
+
+        #skirmishScreen [data-scene] img {
+            width: 320px;
+        }
+
+        #skirmishScreen [data-difficulty] img {
+            width: 190px;
+            height: auto;
+        }
+
+        #arcadeSelectScreen [data-difficulty] img {
+            width: 128px;
+            height: auto;
+        }
+
+        #arcadeSelectScreen .select-card.difficulty-card {
+            margin: 0 auto;
+        }
+
+        #skirmishScreen .select-card.scene-card {
+            flex-basis: 100%;
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        #skirmishScreen .select-card.scene-card .select-row {
+            justify-content: center;
+            flex-wrap: nowrap;
+            width: 100%;
+        }
+
+        #skirmishScreen .select-card.difficulty-card {
+            flex-basis: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        #skirmishScreen .select-card.difficulty-card .select-row,
+        #arcadeSelectScreen .select-card.difficulty-card .select-row {
+            justify-content: center;
+            flex-wrap: nowrap;
+        }
+
+        #skirmishScreen .select-row {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 1100px) {
+            #skirmishScreen .select-row {
+                justify-content: center;
+            }
+
+            #skirmishScreen .select-card.player-card,
+            #skirmishScreen .select-card.enemy-card {
+                flex-basis: calc(50% - 12px);
+            }
+        }
+
+        #btnSkirmishStart img {
+            width: 220px;
+        }
+
+        .section-divider {
+            width: min(70%, 560px);
+            height: 2px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 215, 0, 0.6), rgba(255, 255, 255, 0));
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.35);
+            margin: 6px 0 2px;
+        }
+
+        .screen-title {
+            font-size: 22px;
+            letter-spacing: 2px;
+        }
+
+        #skirmishOutcomeText {
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        #skirmishWinnerHeadshot {
+            width: 220px;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        #arcadeTransitionScreen .versus {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        #arcadeTransitionScreen .versus img {
+            width: 180px;
+            height: auto;
+        }
+
+        #arcadeTransitionScreen .versus img#vsEnemy {
+            width: 150px;
+        }
+
+        #arcadeTransitionScreen .vs-text {
+            font-size: 28px;
+            color: #FFD700;
+        }
+
+        #arcadeTransitionScreen .transition-text {
+            max-width: 560px;
+            text-align: center;
+            line-height: 1.4;
+            font-size: 16px;
+            color: #e6e6e6;
+        }
+
+        #btnArcadeContinue img,
+        #btnArcadeSelectContinue img {
+            width: 180px;
+        }
+
+        #arcadeSelectScreen .select-button img {
+            height: 220px;
+            width: auto;
+        }
+
+        #arcadeSelectScreen [data-difficulty] img {
+            width: 180px;
+            height: auto;
+        }
+
+        #arcadeScore {
+            font-size: 20px;
+            color: #FFD700;
+        }
+
+        #optionsModal {
+            background: transparent;
+            padding: 20px;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        #optionsModal img {
+            width: 520px;
+            max-width: 90vw;
+            height: auto;
+        }
+
+        #btnCloseOptions img {
+            width: 56px;
+            height: auto;
+        }
+
+        #btnCloseOptions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        #helpButton {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            z-index: 12;
+            transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        #helpButton img {
+            width: 84px;
+            height: auto;
+            display: block;
+        }
+
+        #helpButton.active {
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.8), 0 0 14px rgba(255, 215, 0, 0.45);
+            border-radius: 10px;
+        }
+
+        #helpPopup {
+            position: fixed;
+            bottom: 24px;
+            right: 96px;
+            display: none;
+            z-index: 11;
+            pointer-events: none;
+        }
+
+        #helpPopup img {
+            width: 420px;
+            max-width: 70vw;
+            height: auto;
+        }
+
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        #controls h3 {
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+
+        #debug {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #00FF00;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="uiRoot">
+        <button id="globalBack" class="back-button" data-back="menu">
+            <img src="assets/UI/BackButton.png" alt="Back">
+        </button>
+        <div id="menuScreen" class="screen active">
+            <img src="assets/UI/Title.png" alt="Title" style="width: 660px; margin-bottom: 48px;">
+            <button id="btnArcade" class="menu-button">
+                <img src="assets/UI/ArcadeMode.png" alt="Arcade Mode">
+            </button>
+            <button id="btnSkirmish" class="menu-button">
+                <img src="assets/UI/Skrimish.png" alt="Skirmish">
+            </button>
+            <button id="btnOptions" class="menu-button">
+                <img src="assets/UI/Options.png" alt="Options">
+            </button>
+        </div>
+
+        <div id="arcadeSelectScreen" class="screen">
+            <button class="back-button" data-back="menu">
+                <img src="assets/UI/BackButton.png" alt="Back">
+            </button>
+            <div class="screen-title">CHOOSE YOUR AMELIA</div>
+            <div class="select-row">
+                <button class="select-button" data-player="amelia1">
+                    <img src="assets/Characters/CS_Amelia_1.png" alt="Amelia 1">
+                </button>
+                <button class="select-button" data-player="amelia2">
+                    <img src="assets/Characters/CS_Amelia_2.png" alt="Amelia 2">
+                </button>
+                <button class="select-button" data-player="amelia3">
+                    <img src="assets/Characters/CS_Amelia_3.png" alt="Amelia 3">
+                </button>
+            </div>
+            <div class="select-card difficulty-card">
+                <div>DIFFICULTY</div>
+                <div class="select-row">
+                    <button class="select-button" data-difficulty="easy">
+                        <img src="assets/UI/EasyButton.png" alt="Easy">
+                    </button>
+                    <button class="select-button selected" data-difficulty="medium">
+                        <img src="assets/UI/MediumButton.png" alt="Medium">
+                    </button>
+                    <button class="select-button" data-difficulty="hard">
+                        <img src="assets/UI/HardButton.png" alt="Hard">
+                    </button>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+            <button id="btnArcadeSelectContinue" class="menu-button">
+                <img src="assets/UI/ContinueButton2.png" alt="Continue">
+            </button>
+        </div>
+
+        <div id="skirmishScreen" class="screen">
+            <button class="back-button" data-back="menu">
+                <img src="assets/UI/BackButton.png" alt="Back">
+            </button>
+            <div class="screen-title">SKIRMISH</div>
+            <div class="select-row">
+                <div class="select-card player-card">
+                    <div>PLAYER</div>
+                    <div class="select-row">
+                        <button class="select-button selected" data-player="amelia1">
+                            <img src="assets/Characters/CS_Amelia_1.png" alt="Amelia 1">
+                        </button>
+                        <button class="select-button" data-player="amelia2">
+                            <img src="assets/Characters/CS_Amelia_2.png" alt="Amelia 2">
+                        </button>
+                        <button class="select-button" data-player="amelia3">
+                            <img src="assets/Characters/CS_Amelia_3.png" alt="Amelia 3">
+                        </button>
+                    </div>
+                </div>
+                <div class="select-card enemy-card">
+                    <div>ENEMY</div>
+                    <div class="select-row">
+                        <button class="select-button selected" data-enemy="sand">
+                            <img src="assets/Characters/CS_Sand.png" alt="Sand">
+                        </button>
+                        <button class="select-button" data-enemy="meme">
+                            <img src="assets/Characters/CS_Meme_Police.png" alt="Meme Police">
+                        </button>
+                        <button class="select-button" data-enemy="starmer">
+                            <img src="assets/Characters/CS_Starmer.png" alt="Starmer">
+                        </button>
+                    </div>
+                </div>
+                <div class="select-card scene-card">
+                    <div>SCENE</div>
+                    <div class="select-row">
+                        <button class="select-button" data-scene="scene1">
+                            <img src="assets/Scenes/scene-1-button.png" alt="Scene 1">
+                        </button>
+                        <button class="select-button" data-scene="scene2">
+                            <img src="assets/Scenes/scene-2-button.png" alt="Scene 2">
+                        </button>
+                        <button class="select-button" data-scene="scene3">
+                            <img src="assets/Scenes/scene-3-button.png" alt="Scene 3">
+                        </button>
+                    </div>
+                </div>
+                <div class="select-card difficulty-card">
+                    <div>DIFFICULTY</div>
+                    <div class="select-row">
+                        <button class="select-button" data-difficulty="easy">
+                            <img src="assets/UI/EasyButton.png" alt="Easy">
+                        </button>
+                        <button class="select-button selected" data-difficulty="medium">
+                            <img src="assets/UI/MediumButton.png" alt="Medium">
+                        </button>
+                        <button class="select-button" data-difficulty="hard">
+                            <img src="assets/UI/HardButton.png" alt="Hard">
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="section-divider"></div>
+            <button id="btnSkirmishStart" class="menu-button">
+                <img src="assets/UI/ContinueButton2.png" alt="Continue">
+            </button>
+        </div>
+
+        <div id="arcadeTransitionScreen" class="screen">
+            <div class="versus">
+                <img id="vsPlayer" src="" alt="Player">
+                <div class="vs-text">VS</div>
+                <img id="vsEnemy" src="" alt="Enemy">
+            </div>
+            <img id="vsScene" src="" alt="Scene" style="width: 336px;">
+            <div id="arcadeTransitionText" class="transition-text"></div>
+            <button id="btnArcadeContinue" class="menu-button">
+                <img src="assets/UI/ContinueButton2.png" alt="Continue">
+            </button>
+        </div>
+
+        <div id="arcadeEndScreen" class="screen">
+            <button class="back-button" data-back="menu">
+                <img src="assets/UI/BackButton.png" alt="Back">
+            </button>
+            <div class="screen-title">FINAL SCORE</div>
+            <div id="arcadeScore">0</div>
+        </div>
+
+        <div id="skirmishEndScreen" class="screen">
+            <button class="back-button" data-back="menu">
+                <img src="assets/UI/BackButton.png" alt="Back">
+            </button>
+            <div class="screen-title">GAME OVER</div>
+            <img id="skirmishWinnerHeadshot" src="" alt="Winner">
+            <div id="skirmishOutcomeText"></div>
+            <button id="btnSkirmishContinue" class="menu-button">
+                <img src="assets/UI/ContinueButton2.png" alt="Continue">
+            </button>
+        </div>
+
+        <div id="optionsScreen" class="screen">
+            <div id="optionsModal">
+                <button id="btnCloseOptions" class="close-button">
+                    <img src="assets/UI/BackButton.png" alt="Back">
+                </button>
+                <img src="assets/UI/controls.png" alt="Controls">
+            </div>
+        </div>
+    </div>
+
+    <div id="gameWrapper">
+        <canvas id="gameCanvas"></canvas>
+    
+    <div id="controls">
+        <h3>🎮 CONTROLS</h3>
+        <strong>Movement:</strong><br>
+        ← → : Walk Left/Right<br>
+        ↑ : Jump<br>
+        ↓ : Crouch<br><br>
+        <strong>Ground Attacks:</strong><br>
+        Q : Hadoken<br>
+        W : Upper Jab<br>
+        A : Forward Punch<br>
+        S : Kick<br>
+        Z : Flying Kick<br>
+        X : Round Kick<br><br>
+        <strong>Crouch Combos:</strong><br>
+        ↓ + A : Down Punch<br>
+        ↓ + S : Low Kick<br>
+        ↓ + Z : Roll Forward<br><br>
+        <strong>Air Attacks:</strong><br>
+        Air + A : Jump Kick<br>
+        Air + → + A : Forward Kick<br>
+        Air + S : Down Punch<br>
+        Air + W : High Kick
+    </div>
+
+        <div id="debug"></div>
+    </div>
+
+    <div id="helpPopup">
+        <img src="assets/UI/controls.png" alt="Controls">
+    </div>
+    <button id="helpButton" aria-pressed="false">
+        <img src="assets/UI/small-help.png" alt="Help">
+    </button>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = 1200;
+        canvas.height = 600;
+
+        const GRAVITY = 0.35;
+        const FALL_GRAVITY_MULTIPLIER = 0.35;
+        const DAMAGE_MULTIPLIER = 0.3;
+        const KNOCKBACK_X = 5;
+        const KNOCKBACK_Y = -3;
+        const SHOW_DEBUG_BOXES = false;
+        const MAX_ROUNDS = 3;
+        const PLAYER_ACTION_COOLDOWN = 52;
+        const HADOKEN_COOLDOWN = 300;
+        const PLAYER_JUMP_COOLDOWN = 140;
+        const HURTBOX_STAND = { x: 0.33, y: 0.12, w: 0.32, h: 0.76 };
+        const HURTBOX_CROUCH = { x: 0.31, y: 0.4, w: 0.32, h: 0.47 };
+        const HURTBOX_AIR = { x: 0.34, y: 0.20, w: 0.32, h: 0.56 };
+        const HURTBOX_ATTACK = { x: 0.33, y: 0.12, w: 0.32, h: 0.76 };
+        const HURTBOX_FACING_OFFSET = 0.04;
+        const GROUND_Y = 340;
+        const SPRITE_WIDTH = 316;
+        const SPRITE_HEIGHT = 345;
+        const FRAMES_PER_ROW = 8;
+
+        // Load images
+        const images = {
+            players: {
+                amelia1: new Image(),
+                amelia2: new Image(),
+                amelia3: new Image()
+            },
+            enemies: {
+                sand: new Image(),
+                meme: new Image(),
+                starmer: new Image()
+            },
+            headshots: {
+                amelia1: new Image(),
+                amelia2: new Image(),
+                amelia3: new Image(),
+                sand: new Image(),
+                meme: new Image(),
+                starmer: new Image()
+            },
+            scenes: {
+                scene1: new Image(),
+                scene2: new Image(),
+                scene3: new Image()
+            },
+            foregrounds: {
+                scene1: new Image(),
+                scene2: new Image(),
+                scene3: new Image()
+            },
+            sceneButtons: {
+                scene1: new Image(),
+                scene2: new Image(),
+                scene3: new Image()
+            }
+        };
+
+        const imageManifest = [
+            { img: images.players.amelia1, src: 'assets/Characters/amelia-sprite-sheet.png' },
+            { img: images.players.amelia2, src: 'assets/Characters/amelia-2-sprite-sheet.png' },
+            { img: images.players.amelia3, src: 'assets/Characters/amelia-3-sprite-sheet.png' },
+            { img: images.enemies.sand, src: 'assets/Characters/sand-sheet.png' },
+            { img: images.enemies.meme, src: 'assets/Characters/meme-police-sheet.png' },
+            { img: images.enemies.starmer, src: 'assets/Characters/starmer-sprite-sheet.png' },
+            { img: images.headshots.amelia1, src: 'assets/Characters/CS_Amelia_1.png' },
+            { img: images.headshots.amelia2, src: 'assets/Characters/CS_Amelia_2.png' },
+            { img: images.headshots.amelia3, src: 'assets/Characters/CS_Amelia_3.png' },
+            { img: images.headshots.sand, src: 'assets/Characters/CS_Sand.png' },
+            { img: images.headshots.meme, src: 'assets/Characters/CS_Meme_Police.png' },
+            { img: images.headshots.starmer, src: 'assets/Characters/CS_Starmer.png' },
+            { img: images.scenes.scene1, src: 'assets/Scenes/scene-1.png' },
+            { img: images.scenes.scene2, src: 'assets/Scenes/scene-2.png' },
+            { img: images.scenes.scene3, src: 'assets/Scenes/scene-3.png' },
+            { img: images.foregrounds.scene1, src: 'assets/Scenes/scene-1-foreground.png' },
+            { img: images.foregrounds.scene2, src: 'assets/Scenes/scene-2-foreground.png' },
+            { img: images.foregrounds.scene3, src: 'assets/Scenes/scene-3-foreground.png' },
+            { img: images.sceneButtons.scene1, src: 'assets/Scenes/scene-1-button.png' },
+            { img: images.sceneButtons.scene2, src: 'assets/Scenes/scene-2-button.png' },
+            { img: images.sceneButtons.scene3, src: 'assets/Scenes/scene-3-button.png' }
+        ];
+
+        let spriteSheet = images.players.amelia1;
+        let enemySpriteSheet = images.enemies.sand;
+        let sceneImage = images.scenes.scene1;
+        let sceneForeground = images.foregrounds.scene1;
+        let currentPlayerHeadshot = images.headshots.amelia1;
+        let currentEnemyHeadshot = images.headshots.sand;
+        let currentSceneButton = images.sceneButtons.scene1;
+
+        // Animation definitions
+        const animations = {
+            idle: { frames: [0], loop: true, speed: 1 },
+            walk: { frames: [0], loop: true, speed: 1 },
+            hadoken: { frames: [1, 2, 3], loop: false, speed: 0.06 },
+            forwardPunch: { frames: [4], loop: false, speed: 0.04 },
+            upperPunch: { frames: [5, 6], loop: false, speed: 0.06 },
+            flyingKick: { frames: [7, 8, 9, 10, 11, 12, 13], loop: false, speed: 0.055 },
+            roundKickStarter: { frames: [14, 15, 16], loop: false, speed: 0.06 },
+            blockStance: { frames: [17], loop: true, speed: 1 },
+            roundKickHigh: { frames: [14, 15, 16, 18, 18, 18, 18], loop: false, speed: 0.055 },
+            roundKickLow: { frames: [14, 15, 16, 19], loop: false, speed: 0.055 },
+            directHighKick: { frames: [21, 22, 23, 24], loop: false, speed: 0.06 },
+            lowKickForward: { frames: [24], loop: false, speed: 0.04 },
+            upJumpKick: { frames: [25], loop: false, speed: 0.05 },
+            jumpBlock: { frames: [26], loop: true, speed: 1 },
+            jumpUp: { frames: [27], loop: true, speed: 1 },
+            jumpForwardKick: { frames: [28, 29, 30, 31], loop: false, speed: 0.06 },
+            downPunch: { frames: [32, 33], loop: false, speed: 0.06 },
+            rollForward: { frames: [34, 35, 36], loop: false, speed: 0.06 },
+            jumpBackBlock: { frames: [37], loop: true, speed: 1 },
+            jumpDownPunch: { frames: [38], loop: false, speed: 0.05 },
+            jumpDown: { frames: [39], loop: true, speed: 1 },
+            forwardJumpKick: { frames: [40], loop: false, speed: 0.05 },
+            crouch: { frames: [41], loop: true, speed: 1 },
+            upperJabRotation: { frames: [42, 43, 44, 45, 46], loop: false, speed: 0.055 },
+            lowKickBack: { frames: [47], loop: false, speed: 0.04 },
+            upperPunchAlt: { frames: [48, 49], loop: false, speed: 0.06 },
+            knockback: { frames: [37], loop: true, speed: 1 }
+        };
+
+        // Player class
+        class Player {
+            constructor(x, y, sprite) {
+                this.x = x;
+                this.y = y;
+                this.width = SPRITE_WIDTH * 0.75;
+                this.height = SPRITE_HEIGHT * 0.75;
+                this.velocityX = 0;
+                this.velocityY = 0;
+                this.speed = 4;
+                this.jumpPower = 16;
+                this.facingRight = true;
+                this.isGrounded = false;
+                this.currentAnimation = 'idle';
+                this.frameIndex = 0;
+                this.frameTimer = 0;
+                this.animationLocked = false;
+                this.health = 100;
+                this.hitboxes = [];
+                this.gravityDisabled = false;
+                this.flyingKickCooldown = 0;
+                this.zCooldown = 0;
+                this.holdMove = null;
+                this.holdHitbox = null;
+                this.holdInputKey = null;
+                this.sprite = sprite;
+                this.hurtCooldown = 0;
+                this.hitstun = 0;
+                this.actionCooldown = 0;
+                this.hadokenCooldown = 0;
+                this.actionCooldownScale = 1;
+                this.damageMultiplier = 1;
+                this.pendingProjectile = false;
+                this.jumpCooldown = 0;
+            }
+
+            resetState(x, facingRight) {
+                this.x = x;
+                this.y = GROUND_Y;
+                this.velocityX = 0;
+                this.velocityY = 0;
+                this.facingRight = facingRight;
+                this.isGrounded = true;
+                this.currentAnimation = 'idle';
+                this.frameIndex = 0;
+                this.frameTimer = 0;
+                this.animationLocked = false;
+                this.gravityDisabled = false;
+                this.hitboxes = [];
+                this.holdMove = null;
+                this.holdHitbox = null;
+                this.holdInputKey = null;
+                this.flyingKickCooldown = 0;
+                this.zCooldown = 0;
+                this.hurtCooldown = 0;
+                this.health = 100;
+                this.hitstun = 0;
+                this.actionCooldown = 0;
+                this.hadokenCooldown = 0;
+                this.actionCooldownScale = 1;
+                this.damageMultiplier = 1;
+                this.pendingProjectile = false;
+                this.jumpCooldown = 0;
+            }
+
+            setAnimation(animName) {
+                if (this.animationLocked && this.currentAnimation !== 'idle') return;
+                if (this.currentAnimation === animName) return;
+                
+                this.currentAnimation = animName;
+                this.frameIndex = 0;
+                this.frameTimer = 0;
+
+                const anim = animations[animName];
+                if (!anim.loop) {
+                    this.animationLocked = true;
+                }
+            }
+
+            update(keys, pressedKeys, objects) {
+                // Decrease cooldowns
+                if (this.flyingKickCooldown > 0) {
+                    this.flyingKickCooldown--;
+                }
+                if (this.zCooldown > 0) {
+                    this.zCooldown--;
+                }
+                if (this.hurtCooldown > 0) {
+                    this.hurtCooldown--;
+                }
+                if (this.hitstun > 0) {
+                    this.hitstun--;
+                }
+                if (this.actionCooldown > 0) {
+                    this.actionCooldown--;
+                }
+                if (this.hadokenCooldown > 0) {
+                    this.hadokenCooldown--;
+                }
+                if (this.jumpCooldown > 0) {
+                    this.jumpCooldown--;
+                }
+
+                // Gravity (unless disabled during certain moves)
+                if (!this.gravityDisabled) {
+                    const gravity = this.velocityY > 0 ? GRAVITY * FALL_GRAVITY_MULTIPLIER : GRAVITY;
+                    this.velocityY += gravity;
+                }
+                this.y += this.velocityY;
+
+                // Ground collision
+                if (this.y >= GROUND_Y) {
+                    this.y = GROUND_Y;
+                    this.velocityY = 0;
+                    this.isGrounded = true;
+                    this.clearHoldMove();
+                } else {
+                    this.isGrounded = false;
+                }
+
+                // Update animation
+                const anim = animations[this.currentAnimation];
+                this.frameTimer += anim.speed;
+                if (this.frameTimer >= 1) {
+                    this.frameTimer = 0;
+                    this.frameIndex++;
+                    if (this.frameIndex >= anim.frames.length) {
+                        if (anim.loop) {
+                            this.frameIndex = 0;
+                        } else {
+                            this.frameIndex = anim.frames.length - 1;
+                            this.animationLocked = false;
+                            this.gravityDisabled = false; // Re-enable gravity when animation ends
+                            if (this.currentAnimation === 'flyingKick') {
+                                this.zCooldown = 120;
+                            }
+                            if (this.currentAnimation === 'hadoken' && this.pendingProjectile) {
+                                this.createProjectile();
+                                this.pendingProjectile = false;
+                            }
+                            if (this.holdMove !== this.currentAnimation) {
+                                this.setAnimation('idle');
+                            }
+                        }
+                    }
+                }
+
+                if (this.hitstun > 0) {
+                    this.setAnimation('knockback');
+                }
+
+                // Movement and attacks
+                if (!this.animationLocked && this.hitstun === 0) {
+                    this.velocityX = 0;
+
+                    // Crouch state
+                    if (keys['ArrowDown'] && this.isGrounded) {
+                        this.setAnimation('crouch');
+                        if (keys['ArrowLeft']) this.facingRight = false;
+                        if (keys['ArrowRight']) this.facingRight = true;
+                        if (keys['ArrowLeft']) this.velocityX = -this.speed * 0.45;
+                        if (keys['ArrowRight']) this.velocityX = this.speed * 0.45;
+                        
+                        // Crouch + A = Down Punch
+                        if ((pressedKeys['a'] || pressedKeys['A']) && this.actionCooldown === 0) {
+                            this.setAnimation('downPunch');
+                            this.createHitbox(35, 130, 90, 65, 15, 4, 6);
+                            this.setActionCooldown();
+                        }
+                        // Crouch + S = Low Kick Forward
+                        else if ((pressedKeys['s'] || pressedKeys['S']) && this.actionCooldown === 0) {
+                            this.setAnimation('lowKickForward');
+                            this.createHitbox(20, 195, 95, 25, 10, 5, 6);
+                            this.setActionCooldown();
+                        }
+                        // Crouch + X = Low Kick Back
+                        else if ((pressedKeys['x'] || pressedKeys['X']) && this.actionCooldown === 0) {
+                            this.setAnimation('lowKickBack');
+                            this.createHitbox(-60, 195, 120, 25, 12, 5, 6);
+                            this.setActionCooldown();
+                        }
+                        // Crouch + Z = Roll Forward
+                        else if ((pressedKeys['z'] || pressedKeys['Z']) && this.actionCooldown === 0) {
+                            this.setAnimation('rollForward');
+                            this.velocityX = this.facingRight ? 8 : -8;
+                            this.createHitbox(60, 40, 80, 60, 0, 4, 10);
+                            this.setActionCooldown();
+                        }
+                    }
+                    // Ground Attacks (check after crouch so down combos win)
+                    else if ((pressedKeys['q'] || pressedKeys['Q']) && this.actionCooldown === 0 && this.hadokenCooldown === 0) {
+                        if (this.isGrounded) {
+                            this.setAnimation('hadoken');
+                            this.pendingProjectile = true;
+                            this.setActionCooldown();
+                            this.hadokenCooldown = HADOKEN_COOLDOWN;
+                        }
+                    }
+                    else if ((pressedKeys['w'] || pressedKeys['W']) && this.actionCooldown === 0) {
+                        if (this.isGrounded) {
+                            this.setAnimation('upperJabRotation');
+                            this.createHitbox(-25, -25, 70, 90, 20, 6, 10);
+                            this.setActionCooldown();
+                        }
+                    }
+                    else if ((pressedKeys['a'] || pressedKeys['A']) && this.actionCooldown === 0) {
+                        if (this.isGrounded) {
+                            this.setAnimation('forwardPunch');
+                            this.createHitbox(55, 55, 40, 40, 12, 4, 10);
+                            this.setActionCooldown();
+                        }
+                    }
+                    else if ((pressedKeys['s'] || pressedKeys['S']) && this.actionCooldown === 0) {
+                        if (this.isGrounded) {
+                            this.setAnimation('directHighKick');
+                            this.createHitbox(10, 30, 60, 70, 14, 4, 8, false, 1.6, 1);
+                            this.setActionCooldown();
+                        }
+                    }
+                    else if ((pressedKeys['z'] || pressedKeys['Z']) && this.actionCooldown === 0) {
+                        if (this.isGrounded && this.flyingKickCooldown === 0 && this.zCooldown === 0) {
+                            this.setAnimation('flyingKick');
+                            this.velocityX = this.facingRight ? 4 : -4;
+                            this.velocityY = -5;
+                            this.createHitbox(-25, 90, 120, 40, 8, 4, 24, true);
+                            this.flyingKickCooldown = 150; // 2.5 seconds at 60fps
+                            this.setActionCooldown();
+                        }
+                    }
+                    else if ((pressedKeys['x'] || pressedKeys['X']) && this.actionCooldown === 0) {
+                        if (this.isGrounded) {
+                            this.setAnimation('roundKickHigh');
+                            this.createHitbox(-10, -30, 20, 90, 18, 6, 12);
+                            this.setActionCooldown();
+                        }
+                    }
+                    // Jump
+                    else if (pressedKeys['ArrowUp'] && this.isGrounded && this.jumpCooldown === 0) {
+                        this.velocityY = -this.jumpPower;
+                        this.setAnimation('jumpUp');
+                        this.isGrounded = false;
+                        this.jumpCooldown = PLAYER_JUMP_COOLDOWN;
+                    }
+                    // Walk
+                    else if (keys['ArrowLeft']) {
+                        this.velocityX = -this.speed;
+                        this.facingRight = false;
+                        if (this.isGrounded) this.setAnimation('walk');
+                    }
+                    else if (keys['ArrowRight']) {
+                        this.velocityX = this.speed;
+                        this.facingRight = true;
+                        if (this.isGrounded) this.setAnimation('walk');
+                    }
+                    else if (this.isGrounded) {
+                        this.setAnimation('idle');
+                    }
+                }
+                
+                // Air attacks (can be performed even if animation is locked)
+                if (!this.isGrounded && !this.animationLocked && this.hitstun === 0) {
+                    // Air + Z = Flying Kick (lock height - disable gravity)
+                    if ((pressedKeys['z'] || pressedKeys['Z']) && this.flyingKickCooldown === 0 && this.actionCooldown === 0 && this.zCooldown === 0) {
+                        this.velocityY = 0; // Lock current height
+                        this.gravityDisabled = true; // Disable gravity during flying kick
+                        this.setAnimation('flyingKick');
+                        this.velocityX = this.facingRight ? 4 : -4;
+                        this.createHitbox(-25, 90, 120, 40, 8, 4, 16, true);
+                        this.flyingKickCooldown = 150; // 2.5 seconds at 60fps
+                        this.setActionCooldown();
+                    }
+                    // Air + A (with forward direction) = Jump Forward Kick
+                    // Air + A = Punch (hold)
+                    else if ((keys['a'] || keys['A']) && this.actionCooldown === 0) {
+                        this.startHoldMove('jumpDownPunch', {
+                            offsetX: 0, offsetY: 185, width: 30, height: 60, damage: 24, startup: 4
+                        }, 'a');
+                        this.setActionCooldown();
+                    }
+                    // Air + S (with direction) = Forward Kick (hold)
+                    else if ((keys['s'] || keys['S']) && (keys['ArrowRight'] || keys['ArrowLeft']) && this.actionCooldown === 0) {
+                        this.startHoldMove('forwardJumpKick', {
+                            offsetX: 50, offsetY: 145, width: 30, height: 40, damage: 18, startup: 4
+                        }, 's');
+                        this.setActionCooldown();
+                    }
+                    // Air + S (neutral) = Jump Kick (hold)
+                    else if ((keys['s'] || keys['S']) && this.actionCooldown === 0) {
+                        this.startHoldMove('upJumpKick', {
+                            offsetX: 0, offsetY: 55, width: 45, height: 30, damage: 20, startup: 4
+                        }, 's');
+                        this.setActionCooldown();
+                    }
+                    // Air + W = Direct High Kick
+                    else if ((pressedKeys['w'] || pressedKeys['W']) && this.actionCooldown === 0) {
+                        this.setAnimation('directHighKick');
+                        this.createHitbox(30, 25, 30, 30, 26, 4, 8);
+                        this.setActionCooldown();
+                    }
+                }
+                
+                // Clear held air moves when keys are released
+                if (this.holdMove && !this.isGrounded && this.hitstun === 0) {
+                    const holdingA = keys['a'] || keys['A'];
+                    const holdingS = keys['s'] || keys['S'];
+                    if (this.holdInputKey === 'a' && !holdingA) {
+                        this.clearHoldMove();
+                    } else if (this.holdInputKey === 's' && !holdingS) {
+                        this.clearHoldMove();
+                    }
+                }
+
+                // Apply horizontal movement
+                this.x += this.velocityX;
+
+                // Keep in bounds
+                if (this.x < 0) this.x = 0;
+                if (this.x > canvas.width - this.width) this.x = canvas.width - this.width;
+
+                // Update hitboxes
+                this.updateHitboxes(objects);
+                this.updateHoldHitbox(objects);
+            }
+
+            createHitbox(offsetX, offsetY, width, height, damage, startup = 0, lifetime = 10, followPlayer = false, knockbackXBoost = 1, knockbackYBoost = 1) {
+                const actualOffsetX = this.facingRight ? offsetX : -offsetX - width;
+                this.hitboxes.push({
+                    x: this.x + this.width / 2 + actualOffsetX,
+                    y: this.y + offsetY,
+                    width: width,
+                    height: height,
+                    damage: damage * this.damageMultiplier,
+                    startup: startup,
+                    lifetime: lifetime,
+                    followPlayer: followPlayer,
+                    offsetX: offsetX,
+                    offsetY: offsetY,
+                    owner: this,
+                    knockbackXBoost: knockbackXBoost,
+                    knockbackYBoost: knockbackYBoost
+                });
+            }
+
+            createProjectile() {
+                const isPlayer = this === player;
+                const enemyIsSand = this === enemy && currentEnemyId === 'sand';
+                const enemyIsStarmer = this === enemy && currentEnemyId === 'starmer';
+                const colorStops = isPlayer
+                    ? ['#FFFFFF', '#C84BFF', '#6E2BD9']
+                    : enemyIsSand
+                        ? ['#F2E7D5', '#C49A6C', '#7A4F2B']
+                        : enemyIsStarmer
+                            ? ['#FFFFFF', '#FF4D4D', '#B31212']
+                            : ['#FFFFFF', '#00BFFF', '#0066CC'];
+                const size = 64;
+                const spawnX = this.facingRight
+                    ? this.x + this.width * 0.7
+                    : this.x + this.width * 0.3 - size;
+                const projectile = new Projectile(
+                    spawnX,
+                    this.y + 80,
+                    this.facingRight ? 6 : -6,
+                    16 * this.damageMultiplier,
+                    this,
+                    colorStops,
+                    size,
+                    3,
+                    3.2,
+                    2.2
+                );
+                projectiles.push(projectile);
+            }
+
+            updateHitboxes(objects) {
+                this.hitboxes = this.hitboxes.filter(hitbox => {
+                    if (hitbox.followPlayer) {
+                        const actualOffsetX = this.facingRight ? hitbox.offsetX : -hitbox.offsetX - hitbox.width;
+                        hitbox.x = this.x + this.width / 2 + actualOffsetX;
+                        hitbox.y = this.y + hitbox.offsetY;
+                    }
+
+                    if (hitbox.startup > 0) {
+                        hitbox.startup--;
+                        return true;
+                    }
+
+                    hitbox.lifetime--;
+                    
+                    // Check collision with objects
+                    objects.forEach(obj => {
+                        const targetBox = obj.getHurtbox ? obj.getHurtbox() : obj;
+                        if (obj.health > 0 && this.checkCollision(hitbox, targetBox)) {
+                            obj.takeDamage(hitbox.damage, hitbox);
+                        }
+                    });
+
+                    return hitbox.lifetime > 0;
+                });
+            }
+
+            setActionCooldown() {
+                this.actionCooldown = Math.max(
+                    this.actionCooldown,
+                    Math.floor(PLAYER_ACTION_COOLDOWN * this.actionCooldownScale)
+                );
+            }
+
+            startHoldMove(animName, hitboxSpec, holdKey) {
+                if (this.holdMove !== animName) {
+                    this.setAnimation(animName);
+                    this.holdMove = animName;
+                    this.holdInputKey = holdKey;
+                    this.holdHitbox = {
+                        offsetX: hitboxSpec.offsetX,
+                        offsetY: hitboxSpec.offsetY,
+                        width: hitboxSpec.width,
+                        height: hitboxSpec.height,
+                        damage: hitboxSpec.damage,
+                        startup: hitboxSpec.startup || 0,
+                        hitCooldowns: new Map()
+                    };
+                }
+            }
+
+            clearHoldMove() {
+                this.holdMove = null;
+                this.holdHitbox = null;
+                this.holdInputKey = null;
+            }
+
+            updateHoldHitbox(objects) {
+                if (!this.holdHitbox || this.isGrounded) return;
+
+                const hitbox = this.holdHitbox;
+                const actualOffsetX = this.facingRight ? hitbox.offsetX : -hitbox.offsetX - hitbox.width;
+                hitbox.x = this.x + this.width / 2 + actualOffsetX;
+                hitbox.y = this.y + hitbox.offsetY;
+
+                if (hitbox.startup > 0) {
+                    hitbox.startup--;
+                    return;
+                }
+
+                hitbox.hitCooldowns.forEach((cooldown, obj) => {
+                    if (cooldown > 0) {
+                        hitbox.hitCooldowns.set(obj, cooldown - 1);
+                    }
+                });
+
+                objects.forEach(obj => {
+                    const targetBox = obj.getHurtbox ? obj.getHurtbox() : obj;
+                    if (obj.health > 0 && this.checkCollision(hitbox, targetBox)) {
+                        const cooldown = hitbox.hitCooldowns.get(obj) || 0;
+                        if (cooldown <= 0) {
+                            obj.takeDamage(hitbox.damage, this);
+                            hitbox.hitCooldowns.set(obj, 8);
+                        }
+                    }
+                });
+            }
+
+            getHurtbox() {
+                const isCrouch = this.currentAnimation === 'crouch';
+                const isAir = !this.isGrounded;
+                const isAttack = this.animationLocked && !['idle', 'walk', 'crouch', 'jumpUp', 'jumpDown'].includes(this.currentAnimation);
+
+                let spec = HURTBOX_STAND;
+                if (isCrouch) {
+                    spec = HURTBOX_CROUCH;
+                } else if (isAir) {
+                    spec = HURTBOX_AIR;
+                } else if (isAttack) {
+                    spec = HURTBOX_ATTACK;
+                }
+
+                const facingOffset = this.facingRight ? -HURTBOX_FACING_OFFSET : HURTBOX_FACING_OFFSET;
+                return {
+                    x: this.x + this.width * (spec.x + facingOffset),
+                    y: this.y + this.height * spec.y,
+                    width: this.width * spec.w,
+                    height: this.height * spec.h
+                };
+            }
+
+            checkCollision(box1, box2) {
+                return box1.x < box2.x + box2.width &&
+                       box1.x + box1.width > box2.x &&
+                       box1.y < box2.y + box2.height &&
+                       box1.y + box1.height > box2.y;
+            }
+
+            draw() {
+                // Shadow
+                const groundY = GROUND_Y + this.height * 0.72;
+                const maxJump = 220;
+                const airOffset = Math.min(maxJump, Math.max(0, GROUND_Y - this.y));
+                const shadowScale = 1 - (airOffset / maxJump) * 0.5;
+                const shadowWidth = this.width * 0.45 * shadowScale;
+                const shadowHeight = this.height * 0.08 * shadowScale;
+
+                ctx.save();
+                const shadowGradient = ctx.createRadialGradient(
+                    this.x + this.width / 2, groundY, shadowWidth * 0.1,
+                    this.x + this.width / 2, groundY, shadowWidth
+                );
+                shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.55)');
+                shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                ctx.fillStyle = shadowGradient;
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width / 2, groundY + 32, shadowWidth, shadowHeight, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+
+                const anim = animations[this.currentAnimation];
+                const frameNumber = anim.frames[this.frameIndex];
+                const row = Math.floor(frameNumber / FRAMES_PER_ROW);
+                const col = frameNumber % FRAMES_PER_ROW;
+
+                ctx.save();
+                
+                if (!this.facingRight) {
+                    ctx.translate(this.x + this.width, this.y);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(
+                        this.sprite,
+                        col * SPRITE_WIDTH, row * SPRITE_HEIGHT,
+                        SPRITE_WIDTH, SPRITE_HEIGHT,
+                        0, 0,
+                        this.width, this.height
+                    );
+                } else {
+                    ctx.drawImage(
+                        this.sprite,
+                        col * SPRITE_WIDTH, row * SPRITE_HEIGHT,
+                        SPRITE_WIDTH, SPRITE_HEIGHT,
+                        this.x, this.y,
+                        this.width, this.height
+                    );
+                }
+                
+                ctx.restore();
+
+                if (SHOW_DEBUG_BOXES) {
+                    // Draw hitboxes (debug)
+                    ctx.strokeStyle = 'red';
+                    ctx.lineWidth = 2;
+                    this.hitboxes.forEach(hitbox => {
+                        ctx.strokeRect(hitbox.x, hitbox.y, hitbox.width, hitbox.height);
+                    });
+                    if (this.holdHitbox) {
+                        ctx.strokeStyle = this.holdHitbox.startup > 0 ? 'yellow' : 'orange';
+                        ctx.strokeRect(this.holdHitbox.x, this.holdHitbox.y, this.holdHitbox.width, this.holdHitbox.height);
+                    }
+
+                    // Draw hurtbox (debug)
+                    const hurtbox = this.getHurtbox();
+                    ctx.strokeStyle = 'cyan';
+                    ctx.strokeRect(hurtbox.x, hurtbox.y, hurtbox.width, hurtbox.height);
+                }
+
+            }
+
+            takeDamage(damage, source = null) {
+                if (this.hurtCooldown > 0) return;
+                const scaledDamage = damage * DAMAGE_MULTIPLIER;
+                this.health -= scaledDamage;
+                if (this.health < 0) this.health = 0;
+                if (gameMode === 'arcade') {
+                    const attacker = source && (source.owner || source);
+                    if (attacker === player && this !== player) {
+                        applyScore(Math.round(scaledDamage * 12));
+                    } else if (this === player) {
+                        applyScore(-Math.round(scaledDamage * 14));
+                    }
+                }
+                this.hurtCooldown = 20;
+                this.hitstun = Math.max(this.hitstun, 18);
+                this.animationLocked = false;
+                this.hitboxes = [];
+                this.clearHoldMove();
+                this.gravityDisabled = false;
+
+                if (source) {
+                    const origin = source.owner ? source.owner : source;
+                    let direction = origin.x < this.x ? 1 : -1;
+                    const nearLeftWall = this.x < 40;
+                    const nearRightWall = this.x > canvas.width - this.width - 40;
+                    const ignoreWallFlip = source.isProjectile === true;
+                    if (!ignoreWallFlip) {
+                        if (nearLeftWall && direction < 0) direction = 1;
+                        if (nearRightWall && direction > 0) direction = -1;
+                    }
+                    const knockbackBoostX = source.knockbackXBoost || 1;
+                    const knockbackBoostY = source.knockbackYBoost || 1;
+                    this.velocityX = direction * KNOCKBACK_X * knockbackBoostX;
+                    this.velocityY = Math.min(this.velocityY, KNOCKBACK_Y * knockbackBoostY);
+                    this.isGrounded = false;
+
+                    const knockbackPower = Math.abs(this.velocityX) / KNOCKBACK_X + Math.abs(this.velocityY) / Math.abs(KNOCKBACK_Y);
+                    const scaledHitstun = Math.min(40, Math.floor(14 + knockbackPower * 6));
+                    this.hitstun = Math.max(this.hitstun, scaledHitstun);
+                    this.hurtCooldown = Math.max(this.hurtCooldown, Math.floor(scaledHitstun * 0.8));
+                }
+
+                this.setAnimation('knockback');
+            }
+        }
+
+        class Enemy extends Player {
+            constructor(x, y, sprite) {
+                super(x, y, sprite);
+                this.aiKeys = {};
+                this.aiPressed = {};
+                this.health = 100;
+                this.speed = 4;
+                this.jumpPower = 16;
+                this.actionCooldownScale = 1;
+                this.damageMultiplier = 1;
+                this.damageTakenMultiplier = 1;
+                this.maxHealth = this.health;
+                this.baseSpeed = this.speed;
+                this.baseJumpPower = this.jumpPower;
+                this.baseActionCooldownScale = this.actionCooldownScale;
+                this.baseDamageMultiplier = this.damageMultiplier;
+                this.baseDamageTakenMultiplier = this.damageTakenMultiplier;
+                this.attackCooldown = 300;
+                this.jumpCooldown = 50;
+                this.decisionTimer = 0;
+                this.holdTimer = 0;
+                this.holdKey = null;
+                this.escapeCooldown = 0;
+                this.panicTimer = 0;
+                this.lastX = x;
+                this.stuckTimer = 0;
+                this.evadeCooldown = 0;
+                this.lastPlayerMove = null;
+                this.repeatCount = 0;
+                this.sandImpatience = 0;
+                this.moveDirection = 0;
+                this.directionLock = 0;
+            }
+
+            resetAI() {
+                this.aiKeys = {};
+                this.aiPressed = {};
+                this.health = this.maxHealth;
+                this.speed = this.baseSpeed;
+                this.jumpPower = this.baseJumpPower;
+                this.actionCooldownScale = this.baseActionCooldownScale;
+                this.damageMultiplier = this.baseDamageMultiplier;
+                this.damageTakenMultiplier = this.baseDamageTakenMultiplier;
+                this.attackCooldown = 300;
+                this.jumpCooldown = 50;
+                this.decisionTimer = 0;
+                this.holdTimer = 0;
+                this.holdKey = null;
+                this.escapeCooldown = 0;
+                this.panicTimer = 0;
+                this.lastX = this.x;
+                this.stuckTimer = 0;
+                this.evadeCooldown = 0;
+                this.lastPlayerMove = null;
+                this.repeatCount = 0;
+                this.sandImpatience = 0;
+                this.moveDirection = 0;
+                this.directionLock = 0;
+            }
+
+            resetState(x, facingRight) {
+                super.resetState(x, facingRight);
+                this.health = this.maxHealth;
+                this.speed = this.baseSpeed;
+                this.jumpPower = this.baseJumpPower;
+                this.actionCooldownScale = this.baseActionCooldownScale;
+                this.damageMultiplier = this.baseDamageMultiplier;
+                this.damageTakenMultiplier = this.baseDamageTakenMultiplier;
+            }
+
+            takeDamage(damage, source = null) {
+                const prevHealth = this.health;
+                super.takeDamage(damage * 0.8 * this.damageTakenMultiplier, source);
+                if (this.health < prevHealth) {
+                    this.panicTimer = 35;
+                    this.escapeCooldown = Math.max(this.escapeCooldown, 45);
+                    this.hitstun = Math.max(0, this.hitstun - 8);
+                    this.hurtCooldown = Math.max(0, this.hurtCooldown - 5);
+                }
+            }
+
+            updateAI(player, objects) {
+                if (this.attackCooldown > 0) this.attackCooldown--;
+                if (this.jumpCooldown > 0) this.jumpCooldown--;
+                if (this.decisionTimer > 0) this.decisionTimer--;
+                if (this.holdTimer > 0) this.holdTimer--;
+                if (this.escapeCooldown > 0) this.escapeCooldown--;
+                if (this.panicTimer > 0) this.panicTimer--;
+                if (this.evadeCooldown > 0) this.evadeCooldown--;
+                if (this.directionLock > 0) this.directionLock--;
+
+                this.aiKeys = {};
+                this.aiPressed = {};
+
+                const distance = player.x - this.x;
+                const absDistance = Math.abs(distance);
+                this.facingRight = distance >= 0;
+                const targetBox = player.getHurtbox ? player.getHurtbox() : player;
+                const myCenterX = this.x + this.width * 0.5;
+                const targetCenterX = targetBox.x + targetBox.width * 0.5;
+                const dx = targetCenterX - myCenterX;
+                const absDx = Math.abs(dx);
+                const dy = (targetBox.y + targetBox.height * 0.5) - (this.y + this.height * 0.5);
+                const inFront = this.facingRight ? dx > 0 : dx < 0;
+                const strikeRangeGround = inFront && absDx < 200;
+                const strikeRangeGroundStarmer = inFront && absDx < 160;
+                const strikeRangeAir = inFront && absDx < 180 && dy < 80;
+                const nearLeftWall = this.x < 40;
+                const nearRightWall = this.x > canvas.width - this.width - 40;
+                const cornered = (nearLeftWall || nearRightWall) && absDistance < 160;
+                const playerAttacking = player.animationLocked || player.hitboxes.length > 0 || player.holdHitbox;
+                const playerHitThreat = player.hitboxes.length > 0 || player.holdHitbox;
+                const isSandAI = currentEnemyId === 'sand' && this === enemy;
+                const isMemeAI = currentEnemyId === 'meme' && this === enemy;
+                const isStarmerAI = currentEnemyId === 'starmer' && this === enemy;
+                if (isSandAI) {
+                    this.sandImpatience = playerAttacking ? Math.max(0, this.sandImpatience - 1) : Math.min(120, this.sandImpatience + 1);
+                }
+                const playerCharging = absDistance < 140 && playerAttacking;
+                const playerForwardAirKick = !player.isGrounded && playerAttacking && player.currentAnimation === 'forwardJumpKick';
+                if (player.currentAnimation === this.lastPlayerMove && playerAttacking) {
+                    this.repeatCount++;
+                } else {
+                    this.repeatCount = 0;
+                    this.lastPlayerMove = player.currentAnimation;
+                }
+                let avoidHitbox = false;
+                if (playerHitThreat) {
+                    const activeBox = player.holdHitbox && player.holdHitbox.startup <= 0 ? player.holdHitbox : player.hitboxes[0];
+                    if (activeBox) {
+                        const pad = 40;
+                        const inRangeX = this.x + this.width > activeBox.x - pad && this.x < activeBox.x + activeBox.width + pad;
+                        const inRangeY = this.y + this.height > activeBox.y - pad && this.y < activeBox.y + activeBox.height + pad;
+                        avoidHitbox = inRangeX && inRangeY;
+                    }
+                }
+                let escapeDir = null;
+                if (nearLeftWall) {
+                    escapeDir = 'ArrowRight';
+                } else if (nearRightWall) {
+                    escapeDir = 'ArrowLeft';
+                } else if (this.panicTimer > 0) {
+                    escapeDir = distance > 0 ? 'ArrowLeft' : 'ArrowRight';
+                }
+
+                if (this.directionLock === 0 && absDistance > 30) {
+                    this.moveDirection = distance > 0 ? 1 : -1;
+                    this.directionLock = 18;
+                }
+
+                if (Math.abs(this.x - this.lastX) < 0.5 && cornered) {
+                    this.stuckTimer++;
+                } else {
+                    this.stuckTimer = 0;
+                }
+                this.lastX = this.x;
+
+                // Keep holding air attacks while airborne
+                if (!this.isGrounded && this.holdTimer > 0 && this.holdKey) {
+                    this.aiKeys[this.holdKey] = true;
+                    if (this.holdTimer === 1) {
+                        this.holdKey = null;
+                    }
+                    return this.update(this.aiKeys, this.aiPressed, objects);
+                }
+
+                // Corner escape logic
+                if (escapeDir && (cornered || this.panicTimer > 0)) {
+                    this.aiKeys[escapeDir] = true;
+                    if (this.isGrounded && this.escapeCooldown === 0) {
+                        if (!avoidHitbox && this.flyingKickCooldown === 0 && this.actionCooldown === 0 && Math.random() < 0.75) {
+                            this.pressKey('z');
+                        } else if (this.jumpCooldown === 0) {
+                            this.pressKey('ArrowUp');
+                            this.jumpCooldown = 50;
+                        }
+                        this.escapeCooldown = 90;
+                    }
+                }
+                if (cornered && this.stuckTimer > 20 && this.isGrounded) {
+                    this.aiKeys[escapeDir] = true;
+                    this.velocityX = escapeDir === 'ArrowRight' ? 6 : -6;
+                    this.hurtCooldown = Math.max(this.hurtCooldown, 10);
+                    if (this.jumpCooldown === 0) {
+                        if (!avoidHitbox && this.flyingKickCooldown === 0 && this.actionCooldown === 0 && Math.random() < 0.9) {
+                            this.pressKey('z');
+                        } else {
+                            this.pressKey('ArrowUp');
+                        }
+                        this.jumpCooldown = 35;
+                    }
+                    this.escapeCooldown = 120;
+                }
+                if (cornered || this.panicTimer > 0) {
+                    return this.update(this.aiKeys, this.aiPressed, objects);
+                }
+
+                // Emergency evade when pressured up close
+                if (absDistance < 110 && playerAttacking && this.evadeCooldown === 0) {
+                    const retreatDir = this.moveDirection === 1 ? 'ArrowLeft' : 'ArrowRight';
+                    this.aiKeys[retreatDir] = true;
+                    if (this.jumpCooldown === 0 && Math.random() < 0.5) {
+                        this.pressKey('ArrowUp');
+                        this.jumpCooldown = 45;
+                    } else if (!avoidHitbox && this.flyingKickCooldown === 0 && this.actionCooldown === 0 && Math.random() < 0.3) {
+                        this.pressKey('z');
+                    }
+                    this.evadeCooldown = 40;
+                    return this.update(this.aiKeys, this.aiPressed, objects);
+                }
+
+                if (isSandAI && this.isGrounded && this.actionCooldown === 0) {
+                    // Sand: crouch rolls, crouch kicks, jabs, neutral kicks
+                    const wantCrouch = Math.random() < 0.55;
+                    if (wantCrouch) {
+                        this.aiKeys['ArrowDown'] = true;
+                        const crouchRoll = Math.random() < 0.45;
+                        if (crouchRoll) {
+                            this.aiPressed['z'] = true; // roll
+                        } else {
+                            this.aiPressed['s'] = true; // crouch kick
+                        }
+                        return this.update(this.aiKeys, this.aiPressed, objects);
+                    }
+
+                    const roll = Math.random();
+                    if (roll < 0.5) {
+                        this.pressKey('w'); // jab
+                    } else if (roll < 0.85) {
+                        this.pressKey('s'); // neutral kick
+                    } else {
+                        this.pressKey('a'); // punch
+                    }
+
+                    if (!playerAttacking && this.sandImpatience > 60 && this.hadokenCooldown === 0 && Math.random() < 0.35) {
+                        this.pressKey('q');
+                    } else if (!playerAttacking && this.sandImpatience > 70 && this.flyingKickCooldown === 0 && Math.random() < 0.25) {
+                        this.pressKey('z');
+                    }
+
+                    this.attackCooldown = 26;
+                    return this.update(this.aiKeys, this.aiPressed, objects);
+                }
+
+                if (isMemeAI && this.isGrounded && this.actionCooldown === 0) {
+                    // Meme cop: strategic Q/Z, otherwise punch-heavy with crouch pressure
+                    if (!playerCharging && this.hadokenCooldown === 0 && absDistance > 170 && absDistance < 320 && Math.random() < 0.55) {
+                        this.pressKey('q');
+                        this.attackCooldown = 28;
+                        return this.update(this.aiKeys, this.aiPressed, objects);
+                    }
+
+                    if (!playerCharging && strikeRangeGround && this.flyingKickCooldown === 0 && Math.random() < 0.6) {
+                        this.pressKey('z');
+                        this.attackCooldown = 28;
+                        return this.update(this.aiKeys, this.aiPressed, objects);
+                    }
+
+                    const crouchPunch = Math.random() < 0.55;
+                    if (crouchPunch) {
+                        this.aiKeys['ArrowDown'] = true;
+                        this.aiKeys[distance > 0 ? 'ArrowRight' : 'ArrowLeft'] = true;
+                        this.aiPressed['a'] = true;
+                    } else {
+                        this.pressKey('a');
+                    }
+                    this.attackCooldown = 22;
+                    return this.update(this.aiKeys, this.aiPressed, objects);
+                }
+
+                if (isStarmerAI && this.isGrounded && this.actionCooldown === 0) {
+                    // Starmer: aggressive, no high kick / down punch / air down punch / round kick
+                    const playerAirNear = !player.isGrounded && !playerForwardAirKick && absDistance < 250;
+                    if ((playerForwardAirKick && absDistance < 250) || playerAirNear) {
+                        if (Math.random() < 0.7) {
+                            this.aiKeys['ArrowDown'] = true;
+                            this.aiKeys[distance > 0 ? 'ArrowLeft' : 'ArrowRight'] = true;
+                            this.aiPressed['z'] = true; // roll away
+                        } else {
+                            this.pressKey('s'); // neutral kick to anti-air
+                        }
+                        this.attackCooldown = 20;
+                        return this.update(this.aiKeys, this.aiPressed, objects);
+                    }
+                    if (playerAttacking && absDistance < 150 && this.flyingKickCooldown === 0 && Math.random() < 0.45) {
+                        this.pressKey('ArrowUp');
+                        this.aiPressed['z'] = true;
+                        this.jumpCooldown = 40;
+                        return this.update(this.aiKeys, this.aiPressed, objects);
+                    }
+
+                    if (playerAttacking && absDistance < 140 && Math.random() < 0.5) {
+                        this.aiKeys['ArrowDown'] = true;
+                        this.aiKeys[distance > 0 ? 'ArrowRight' : 'ArrowLeft'] = true;
+                        this.aiPressed['z'] = true; // roll escape
+                        return this.update(this.aiKeys, this.aiPressed, objects);
+                    }
+
+                    if (this.hadokenCooldown === 0 && absDistance > 150 && absDistance < 320 && !playerCharging && Math.random() < 0.5) {
+                        this.pressKey('q');
+                        this.attackCooldown = 24;
+                        return this.update(this.aiKeys, this.aiPressed, objects);
+                    }
+
+                    if (strikeRangeGroundStarmer && this.flyingKickCooldown === 0 && Math.random() < 0.55) {
+                        this.pressKey('z');
+                        this.attackCooldown = 24;
+                        return this.update(this.aiKeys, this.aiPressed, objects);
+                    }
+
+                    // Forward pressure: prefer forward kick engages
+                    if (!playerForwardAirKick && absDistance < 260 && Math.random() < 0.7) {
+                        const forwardKey = distance > 0 ? 'ArrowRight' : 'ArrowLeft';
+                        this.aiKeys[forwardKey] = true;
+                        this.aiPressed['ArrowUp'] = true;
+                        this.aiPressed['a'] = true;
+                        this.holdKey = 'a';
+                        this.holdTimer = 24;
+                        this.jumpCooldown = 30;
+                    } else {
+                        if (absDistance < 220) {
+                            this.aiKeys['ArrowDown'] = true;
+                            this.aiKeys[distance > 0 ? 'ArrowRight' : 'ArrowLeft'] = true;
+                            this.aiPressed['s'] = true;
+                        } else {
+                            this.aiKeys[distance > 0 ? 'ArrowRight' : 'ArrowLeft'] = true;
+                        }
+                    }
+                    this.attackCooldown = 20;
+                    return this.update(this.aiKeys, this.aiPressed, objects);
+                }
+
+                if (this.repeatCount > 12 && absDistance < 170) {
+                    const retreatDir = this.moveDirection === 1 ? 'ArrowLeft' : 'ArrowRight';
+                    this.aiKeys[retreatDir] = true;
+                    if (this.attackCooldown === 0 && !avoidHitbox) {
+                        if (isStarmerAI && absDistance > 80) {
+                            this.pressKey('a');
+                        } else {
+                            this.pressKey('w');
+                        }
+                        this.attackCooldown = 24;
+                    } else if (this.jumpCooldown === 0) {
+                        this.pressKey('ArrowUp');
+                        this.jumpCooldown = 35;
+                    }
+                    this.evadeCooldown = 30;
+                    return this.update(this.aiKeys, this.aiPressed, objects);
+                }
+
+                // Basic approach/retreat movement
+                const approachDistance = isStarmerAI ? 170 : 220;
+                const retreatDistance = isStarmerAI ? 60 : 90;
+                if (absDistance > approachDistance) {
+                    this.aiKeys[this.moveDirection === 1 ? 'ArrowRight' : 'ArrowLeft'] = true;
+                } else if (absDistance < retreatDistance) {
+                    this.aiKeys[this.moveDirection === 1 ? 'ArrowLeft' : 'ArrowRight'] = true;
+                }
+
+                if (this.decisionTimer === 0 && this.isGrounded) {
+                    this.decisionTimer = 12;
+
+                    if (!playerAttacking && this.attackCooldown === 0 && absDistance < 300 && this.actionCooldown === 0) {
+                        if (this.flyingKickCooldown === 0 && strikeRangeGround && Math.random() < 0.55) {
+                            this.pressKey('z');
+                            this.attackCooldown = 16;
+                        } else if (strikeRangeGround && Math.random() < 0.7) {
+                            this.pressKey('a');
+                            this.attackCooldown = 16;
+                        } else if (this.hadokenCooldown === 0 && absDistance > 180 && Math.random() < 0.35) {
+                            this.pressKey('q');
+                            this.attackCooldown = 20;
+                        }
+                    } else if (!playerAttacking && this.attackCooldown === 0 && strikeRangeGround && this.flyingKickCooldown === 0 && this.actionCooldown === 0 && Math.random() < 0.65) {
+                        this.pressKey('z');
+                        this.attackCooldown = 28;
+                    } else if (this.attackCooldown === 0 && strikeRangeGround) {
+                        const roll = Math.random();
+                        if (roll < 0.36) {
+                            this.pressKey('a');
+                        } else if (roll < 0.56) {
+                            if (isStarmerAI && absDistance > 80) {
+                                this.pressKey('a');
+                            } else {
+                                this.pressKey('w');
+                            }
+                        } else if (roll < 0.78) {
+                            this.pressKey('s');
+                        } else if (roll < 0.9) {
+                            this.pressKey('x');
+                        } else if (roll < 0.98 && this.flyingKickCooldown === 0) {
+                            this.pressKey('z');
+                        } else {
+                            this.pressKey('a');
+                        }
+                        this.attackCooldown = 28;
+                    } else if (!isMemeAI && !isStarmerAI && this.jumpCooldown === 0 && absDistance < 320 && Math.random() < (playerAttacking ? 0.6 : 0.2)) {
+                        this.pressKey('ArrowUp');
+                        this.jumpCooldown = 30;
+                    }
+                }
+
+                // Air attacks
+                if (!this.isGrounded) {
+                    if (isSandAI) {
+                        if (strikeRangeAir) {
+                            this.aiKeys['s'] = true;
+                            this.aiKeys[distance > 0 ? 'ArrowRight' : 'ArrowLeft'] = true;
+                            this.holdKey = 's';
+                            this.holdTimer = 24;
+                        }
+                    } else if (isMemeAI) {
+                        if (this.flyingKickCooldown === 0 && this.actionCooldown === 0) {
+                            this.aiKeys['z'] = true;
+                            this.aiPressed['z'] = true;
+                            this.aiKeys[distance > 0 ? 'ArrowLeft' : 'ArrowRight'] = true;
+                        } else {
+                            this.aiKeys[distance > 0 ? 'ArrowLeft' : 'ArrowRight'] = true;
+                        }
+                    } else if (isStarmerAI) {
+                        if (this.flyingKickCooldown === 0 && this.actionCooldown === 0) {
+                            this.aiKeys['s'] = true;
+                            this.aiKeys[distance > 0 ? 'ArrowRight' : 'ArrowLeft'] = true;
+                            this.holdKey = 's';
+                            this.holdTimer = 24;
+                        }
+                    } else {
+                        if (strikeRangeAir && (Math.random() < 0.5 || this.holdKey)) {
+                            this.aiKeys['a'] = true;
+                            this.holdKey = 'a';
+                            this.holdTimer = 30;
+                        } else if (strikeRangeAir) {
+                            this.aiKeys['s'] = true;
+                            this.holdKey = 's';
+                            this.holdTimer = 24;
+                        }
+                    }
+                }
+
+                this.update(this.aiKeys, this.aiPressed, objects);
+            }
+
+            pressKey(key) {
+                this.aiKeys[key] = true;
+                this.aiPressed[key] = true;
+            }
+        }
+
+        // Projectile class
+        class Projectile {
+            constructor(x, y, velocityX, damage, owner = null, colorStops = null, size = 40, spawnGrace = 0, knockbackYBoost = 1, knockbackXBoost = 1) {
+                this.x = x;
+                this.y = y;
+                this.width = size;
+                this.height = size;
+                this.velocityX = velocityX;
+                this.damage = damage;
+                this.lifetime = 100;
+                this.active = true;
+                this.owner = owner;
+                this.colorStops = colorStops || ['#FFFFFF', '#00BFFF', '#0066CC'];
+                this.spawnGrace = spawnGrace;
+                this.knockbackYBoost = knockbackYBoost;
+                this.knockbackXBoost = knockbackXBoost;
+                this.isProjectile = true;
+            }
+
+            update(objects) {
+                this.x += this.velocityX;
+                this.lifetime--;
+
+                if (this.lifetime <= 0 || this.x < 0 || this.x > canvas.width) {
+                    this.active = false;
+                }
+
+                if (this.spawnGrace > 0) {
+                    this.spawnGrace--;
+                    return;
+                }
+
+                // Check collision with objects
+                objects.forEach(obj => {
+                    if (obj === this.owner) return;
+                    const targetBox = obj.getHurtbox ? obj.getHurtbox() : obj;
+                    if (obj.health > 0 && this.checkCollision(targetBox)) {
+                        obj.takeDamage(this.damage, this);
+                        this.active = false;
+                    }
+                });
+            }
+
+            checkCollision(obj) {
+                return this.x < obj.x + obj.width &&
+                       this.x + this.width > obj.x &&
+                       this.y < obj.y + obj.height &&
+                       this.y + this.height > obj.y;
+            }
+
+            draw() {
+                // Draw energy ball
+                const gradient = ctx.createRadialGradient(
+                    this.x + this.width/2, this.y + this.height/2, 5,
+                    this.x + this.width/2, this.y + this.height/2, this.width/2
+                );
+                gradient.addColorStop(0, this.colorStops[0]);
+                gradient.addColorStop(0.5, this.colorStops[1]);
+                gradient.addColorStop(1, this.colorStops[2]);
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.x + this.width/2, this.y + this.height/2, this.width/2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Test Object classes
+        class Crate {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 60;
+                this.height = 60;
+                this.health = 50;
+                this.maxHealth = 50;
+                this.color = '#8B4513';
+                this.shaking = 0;
+                this.hurtCooldown = 0;
+            }
+
+            takeDamage(damage) {
+                if (this.hurtCooldown > 0) return;
+                const scaledDamage = damage * DAMAGE_MULTIPLIER;
+                this.health -= scaledDamage;
+                this.shaking = 5;
+                this.hurtCooldown = 20;
+                if (this.health <= 0) {
+                    // Create debris effect
+                    for (let i = 0; i < 8; i++) {
+                        debris.push(new Debris(this.x + this.width/2, this.y + this.height/2));
+                    }
+                }
+            }
+
+            update() {
+                if (this.shaking > 0) {
+                    this.shaking--;
+                }
+                if (this.hurtCooldown > 0) {
+                    this.hurtCooldown--;
+                }
+            }
+
+            draw() {
+                if (this.health <= 0) return;
+
+                const shakeX = this.shaking > 0 ? (Math.random() - 0.5) * this.shaking : 0;
+                const shakeY = this.shaking > 0 ? (Math.random() - 0.5) * this.shaking : 0;
+
+                // Draw crate
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x + shakeX, this.y + shakeY, this.width, this.height);
+                
+                // Draw wood texture
+                ctx.strokeStyle = '#654321';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(this.x + shakeX, this.y + shakeY, this.width, this.height);
+                ctx.beginPath();
+                ctx.moveTo(this.x + 15 + shakeX, this.y + shakeY);
+                ctx.lineTo(this.x + 15 + shakeX, this.y + this.height + shakeY);
+                ctx.moveTo(this.x + 45 + shakeX, this.y + shakeY);
+                ctx.lineTo(this.x + 45 + shakeX, this.y + this.height + shakeY);
+                ctx.stroke();
+
+                // Health bar
+                if (this.health < this.maxHealth) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                    ctx.fillRect(this.x, this.y - 10, this.width, 5);
+                    ctx.fillStyle = '#FF6600';
+                    ctx.fillRect(this.x, this.y - 10, this.width * (this.health / this.maxHealth), 5);
+                }
+            }
+        }
+
+        class TrainingDummy {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 80;
+                this.height = 120;
+                this.health = 200;
+                this.maxHealth = 200;
+                this.shaking = 0;
+                this.hurtCooldown = 0;
+            }
+
+            takeDamage(damage) {
+                if (this.hurtCooldown > 0) return;
+                const scaledDamage = damage * DAMAGE_MULTIPLIER;
+                this.health -= scaledDamage;
+                this.shaking = 8;
+                if (this.health < 0) this.health = 0;
+                this.hurtCooldown = 20;
+            }
+
+            update() {
+                if (this.shaking > 0) {
+                    this.shaking--;
+                }
+                if (this.hurtCooldown > 0) {
+                    this.hurtCooldown--;
+                }
+                // Regenerate health slowly
+                if (this.health < this.maxHealth) {
+                    this.health += 0.1;
+                }
+            }
+
+            draw() {
+                const shakeX = this.shaking > 0 ? (Math.random() - 0.5) * this.shaking : 0;
+                const shakeY = this.shaking > 0 ? (Math.random() - 0.5) * this.shaking : 0;
+
+                // Body
+                ctx.fillStyle = '#CD853F';
+                ctx.fillRect(this.x + 25 + shakeX, this.y + 20 + shakeY, 30, 60);
+                
+                // Head
+                ctx.fillStyle = '#DEB887';
+                ctx.beginPath();
+                ctx.arc(this.x + 40 + shakeX, this.y + 15 + shakeY, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Base
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.moveTo(this.x + 30 + shakeX, this.y + 80 + shakeY);
+                ctx.lineTo(this.x + 50 + shakeX, this.y + 80 + shakeY);
+                ctx.lineTo(this.x + 55 + shakeX, this.y + this.height + shakeY);
+                ctx.lineTo(this.x + 25 + shakeX, this.y + this.height + shakeY);
+                ctx.closePath();
+                ctx.fill();
+
+                // Health bar
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                ctx.fillRect(this.x, this.y - 15, this.width, 8);
+                ctx.fillStyle = '#00FF00';
+                ctx.fillRect(this.x, this.y - 15, this.width * (this.health / this.maxHealth), 8);
+                
+                // Health text
+                ctx.fillStyle = 'white';
+                ctx.font = '10px monospace';
+                ctx.textAlign = 'center';
+                ctx.fillText(Math.floor(this.health), this.x + this.width/2, this.y - 20);
+            }
+        }
+
+        class Debris {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 10;
+                this.height = 10;
+                this.velocityX = (Math.random() - 0.5) * 10;
+                this.velocityY = -Math.random() * 10;
+                this.lifetime = 60;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.3;
+            }
+
+            update() {
+                this.velocityY += GRAVITY * 0.5;
+                this.x += this.velocityX;
+                this.y += this.velocityY;
+                this.rotation += this.rotationSpeed;
+                this.lifetime--;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                ctx.restore();
+            }
+        }
+
+        // Game objects
+        const player = new Player(200, GROUND_Y, spriteSheet);
+        const enemy = new Enemy(900, GROUND_Y, enemySpriteSheet);
+        let currentRound = 1;
+        let playerRounds = 0;
+        let enemyRounds = 0;
+        let roundActive = false;
+        let roundStartTimer = 120;
+        let roundEndTimer = 0;
+        let matchOver = false;
+        const projectiles = [];
+        const debris = [];
+        const objects = [];
+
+        // Input handling
+        const keys = {};
+        const prevKeys = {};
+        const pressedKeys = {};
+        const controlsEl = document.getElementById('controls');
+        const debugEl = document.getElementById('debug');
+        const gameWrapper = document.getElementById('gameWrapper');
+        const screens = {
+            menu: document.getElementById('menuScreen'),
+            arcadeSelect: document.getElementById('arcadeSelectScreen'),
+            skirmish: document.getElementById('skirmishScreen'),
+            options: document.getElementById('optionsScreen'),
+            arcadeTransition: document.getElementById('arcadeTransitionScreen'),
+            arcadeEnd: document.getElementById('arcadeEndScreen'),
+            skirmishEnd: document.getElementById('skirmishEndScreen')
+        };
+        const globalBack = document.getElementById('globalBack');
+        const arcadeScoreEl = document.getElementById('arcadeScore');
+        const vsPlayerEl = document.getElementById('vsPlayer');
+        const vsEnemyEl = document.getElementById('vsEnemy');
+        const vsSceneEl = document.getElementById('vsScene');
+        const arcadeTransitionText = document.getElementById('arcadeTransitionText');
+        const skirmishOutcomeText = document.getElementById('skirmishOutcomeText');
+        const skirmishWinnerHeadshot = document.getElementById('skirmishWinnerHeadshot');
+
+        let controlsVisible = false;
+        let debugVisible = false;
+        let gameMode = 'menu';
+        let arcadeStageIndex = 0;
+        let arcadeScore = 0;
+        let arcadeResolving = false;
+        let skirmishResolving = false;
+        let currentPlayerId = 'amelia1';
+        let currentEnemyId = 'sand';
+        let currentSceneId = 'scene1';
+        let arcadeSelection = 'amelia1';
+        let currentDifficulty = 'medium';
+        let arcadeDifficulty = 'medium';
+
+        const arcadeStages = [
+            { enemy: 'sand', scene: 'scene1', description: 'A storm brews in the dunes. The Sand Person rises to test your resolve.' },
+            { enemy: 'meme', scene: 'scene2', description: 'Chaos floods the city. The Meme Police enforce order by any means.' },
+            { enemy: 'starmer', scene: 'scene3', description: 'The final stage. Starmer stands between you and the fate of Britain.' }
+        ];
+        const skirmishSelection = {
+            player: 'amelia1',
+            enemy: 'sand',
+            scene: 'scene1',
+            difficulty: 'medium'
+        };
+        const difficultySettings = {
+            easy: { enemyDamage: 0.65, enemyTaken: 1.2, scoreMultiplier: 1 },
+            medium: { enemyDamage: 0.8, enemyTaken: 1.1, scoreMultiplier: 1.15 },
+            hard: { enemyDamage: 1, enemyTaken: 1, scoreMultiplier: 1.35 }
+        };
+
+        const updateOverlayVisibility = () => {
+            controlsEl.style.display = controlsVisible ? 'block' : 'none';
+            debugEl.style.display = debugVisible ? 'block' : 'none';
+        };
+        updateOverlayVisibility();
+
+        const setScreen = (name) => {
+            Object.values(screens).forEach((screen) => screen.classList.remove('active'));
+            if (screens[name]) screens[name].classList.add('active');
+            const inGame = name === 'game';
+            gameWrapper.style.display = inGame ? 'block' : 'none';
+            globalBack.style.display = inGame ? 'block' : 'none';
+            controlsVisible = inGame ? controlsVisible : false;
+            debugVisible = inGame ? debugVisible : false;
+            updateOverlayVisibility();
+            if (name === 'menu') {
+                gameMode = 'menu';
+            }
+        };
+
+        const configureMatch = ({ playerId, enemyId, sceneId }) => {
+            currentPlayerId = playerId;
+            currentEnemyId = enemyId;
+            currentSceneId = sceneId;
+            spriteSheet = images.players[playerId];
+            enemySpriteSheet = images.enemies[enemyId];
+            sceneImage = images.scenes[sceneId];
+            sceneForeground = images.foregrounds[sceneId];
+            currentPlayerHeadshot = images.headshots[playerId];
+            currentEnemyHeadshot = images.headshots[enemyId];
+            currentSceneButton = images.sceneButtons[sceneId];
+            if (player) player.sprite = spriteSheet;
+            if (enemy) enemy.sprite = enemySpriteSheet;
+        };
+
+        const applyDifficulty = (difficulty) => {
+            const settings = difficultySettings[difficulty] || difficultySettings.hard;
+            currentDifficulty = difficulty;
+            enemy.baseDamageMultiplier = settings.enemyDamage;
+            enemy.baseDamageTakenMultiplier = settings.enemyTaken;
+            enemy.damageMultiplier = settings.enemyDamage;
+            enemy.damageTakenMultiplier = settings.enemyTaken;
+        };
+
+        const getScoreMultiplier = () => {
+            return (difficultySettings[currentDifficulty] || difficultySettings.hard).scoreMultiplier;
+        };
+
+        const startMatch = () => {
+            currentRound = 1;
+            playerRounds = 0;
+            enemyRounds = 0;
+            matchOver = false;
+            roundActive = false;
+            roundStartTimer = 120;
+            roundEndTimer = 0;
+            arcadeResolving = false;
+            skirmishResolving = false;
+            applyDifficulty(currentDifficulty);
+            startRound();
+            setScreen('game');
+        };
+
+        const showArcadeTransition = () => {
+            vsPlayerEl.src = currentPlayerHeadshot.src;
+            vsEnemyEl.src = currentEnemyHeadshot.src;
+            vsSceneEl.src = currentSceneButton.src;
+            const stage = arcadeStages[arcadeStageIndex];
+            arcadeTransitionText.textContent = stage ? stage.description : '';
+            setScreen('arcadeTransition');
+        };
+
+        const startArcade = (playerId) => {
+            gameMode = 'arcade';
+            arcadeScore = 0;
+            arcadeStageIndex = 0;
+            const stage = arcadeStages[arcadeStageIndex];
+            configureMatch({ playerId, enemyId: stage.enemy, sceneId: stage.scene });
+            showArcadeTransition();
+        };
+
+        const startSkirmish = () => {
+            gameMode = 'skirmish';
+            currentDifficulty = skirmishSelection.difficulty || 'hard';
+            configureMatch({
+                playerId: skirmishSelection.player,
+                enemyId: skirmishSelection.enemy,
+                sceneId: skirmishSelection.scene
+            });
+            startMatch();
+        };
+
+        const finishArcade = () => {
+            const bonus = Math.max(0, Math.floor(player.health * 10));
+            const finalScore = Math.max(0, Math.floor(arcadeScore + bonus * getScoreMultiplier()));
+            arcadeScoreEl.textContent = finalScore;
+            setScreen('arcadeEnd');
+        };
+
+        const finishSkirmish = () => {
+            const playerWon = playerRounds > enemyRounds;
+            if (playerWon) {
+                skirmishOutcomeText.textContent = 'You won! Britain is saved!';
+                skirmishOutcomeText.style.color = '#00FF66';
+                skirmishWinnerHeadshot.src = currentPlayerHeadshot.src;
+            } else {
+                skirmishOutcomeText.textContent = 'You lost... Britain has fallen.';
+                skirmishOutcomeText.style.color = '#FF3333';
+                skirmishWinnerHeadshot.src = currentEnemyHeadshot.src;
+            }
+            setScreen('skirmishEnd');
+        };
+
+        const applyScore = (delta) => {
+            if (gameMode !== 'arcade') return;
+            arcadeScore = Math.max(0, arcadeScore + delta * getScoreMultiplier());
+        };
+        
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'h' || e.key === 'H') {
+                controlsVisible = !controlsVisible;
+                updateOverlayVisibility();
+            }
+            if (e.key === 'd' || e.key === 'D') {
+                debugVisible = !debugVisible;
+                updateOverlayVisibility();
+            }
+            keys[e.key] = true;
+            e.preventDefault();
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        document.getElementById('btnArcade').addEventListener('click', () => setScreen('arcadeSelect'));
+        document.getElementById('btnSkirmish').addEventListener('click', () => setScreen('skirmish'));
+        document.getElementById('btnOptions').addEventListener('click', () => setScreen('options'));
+        document.getElementById('btnCloseOptions').addEventListener('click', () => setScreen('menu'));
+        document.getElementById('btnSkirmishContinue').addEventListener('click', () => setScreen('menu'));
+        document.getElementById('btnArcadeContinue').addEventListener('click', () => startMatch());
+        document.querySelectorAll('[data-back]').forEach((btn) => {
+            btn.addEventListener('click', () => setScreen('menu'));
+        });
+
+        document.querySelectorAll('#arcadeSelectScreen [data-player]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                arcadeSelection = btn.dataset.player;
+                document.querySelectorAll('#arcadeSelectScreen [data-player]').forEach((b) => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
+        document.querySelectorAll('#arcadeSelectScreen [data-difficulty]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                arcadeDifficulty = btn.dataset.difficulty;
+                document.querySelectorAll('#arcadeSelectScreen [data-difficulty]').forEach((b) => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
+        document.getElementById('btnArcadeSelectContinue').addEventListener('click', () => {
+            currentDifficulty = arcadeDifficulty;
+            startArcade(arcadeSelection);
+        });
+
+        const markSelected = (selector, valueAttr) => {
+            document.querySelectorAll(selector).forEach((btn) => {
+                btn.classList.toggle('selected', btn.dataset[valueAttr] === btn.dataset.selectedValue);
+            });
+        };
+
+        document.querySelectorAll('#skirmishScreen [data-player]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                skirmishSelection.player = btn.dataset.player;
+                document.querySelectorAll('#skirmishScreen [data-player]').forEach((b) => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
+        document.querySelectorAll('#skirmishScreen [data-enemy]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                skirmishSelection.enemy = btn.dataset.enemy;
+                document.querySelectorAll('#skirmishScreen [data-enemy]').forEach((b) => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
+        document.querySelectorAll('#skirmishScreen [data-scene]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                skirmishSelection.scene = btn.dataset.scene;
+                document.querySelectorAll('#skirmishScreen [data-scene]').forEach((b) => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
+        document.querySelectorAll('#skirmishScreen [data-difficulty]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                skirmishSelection.difficulty = btn.dataset.difficulty;
+                document.querySelectorAll('#skirmishScreen [data-difficulty]').forEach((b) => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
+        document.getElementById('btnSkirmishStart').addEventListener('click', startSkirmish);
+
+        const helpButton = document.getElementById('helpButton');
+        const helpPopup = document.getElementById('helpPopup');
+        const toggleHelp = () => {
+            const isActive = helpButton.classList.toggle('active');
+            helpButton.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            helpPopup.style.display = isActive ? 'block' : 'none';
+        };
+        helpButton.addEventListener('click', toggleHelp);
+
+        function startRound() {
+            player.resetState(200, true);
+            enemy.resetState(900, false);
+            enemy.resetAI();
+            projectiles.length = 0;
+            debris.length = 0;
+            roundActive = false;
+            roundStartTimer = 120;
+            roundEndTimer = 0;
+        }
+
+        function drawHud() {
+            ctx.save();
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, 70);
+
+            ctx.font = '18px "Courier New", monospace';
+            ctx.fillStyle = '#FFD700';
+            ctx.textAlign = 'center';
+            ctx.fillText(`ROUND ${currentRound}`, canvas.width / 2, 28);
+
+            const faceSize = 38;
+            const drawCenteredCrop = (img, dx, dy, size) => {
+                const sw = img.naturalWidth || img.width;
+                const sh = img.naturalHeight || img.height;
+                if (!sw || !sh) return;
+                const scale = Math.max(size / sw, size / sh);
+                const cropW = size / scale;
+                const cropH = size / scale;
+                const sx = (sw - cropW) / 2;
+                const sy = (sh - cropH) / 2;
+                ctx.drawImage(img, sx, sy, cropW, cropH, dx, dy, size, size);
+            };
+
+            if (currentPlayerHeadshot.complete) {
+                drawCenteredCrop(currentPlayerHeadshot, 20, 10, faceSize);
+            }
+            if (currentEnemyHeadshot.complete) {
+                drawCenteredCrop(currentEnemyHeadshot, canvas.width - 20 - faceSize, 10, faceSize);
+            }
+
+            const barWidth = 360;
+            const barHeight = 12;
+            const barY = 18;
+            const playerMax = 100;
+            const enemyMax = 100;
+            const playerPct = Math.max(0, Math.min(1, player.health / playerMax));
+            const enemyPct = Math.max(0, Math.min(1, enemy.health / enemyMax));
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(70, barY, barWidth, barHeight);
+            ctx.fillRect(canvas.width - 70 - barWidth, barY, barWidth, barHeight);
+
+            ctx.fillStyle = playerPct > 0.3 ? '#00FF66' : '#FF3333';
+            ctx.fillRect(70, barY, barWidth * playerPct, barHeight);
+
+            ctx.fillStyle = enemyPct > 0.3 ? '#FF6666' : '#FF3333';
+            ctx.fillRect(canvas.width - 70 - barWidth * enemyPct, barY, barWidth * enemyPct, barHeight);
+
+            for (let i = 0; i < MAX_ROUNDS; i++) {
+                const x = 80 + i * 20;
+                ctx.fillStyle = i < playerRounds ? '#00FF66' : 'rgba(255,255,255,0.2)';
+                ctx.beginPath();
+                ctx.arc(x, 50, 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            for (let i = 0; i < MAX_ROUNDS; i++) {
+                const x = canvas.width - 80 - i * 20;
+                ctx.fillStyle = i < enemyRounds ? '#FF6666' : 'rgba(255,255,255,0.2)';
+                ctx.beginPath();
+                ctx.arc(x, 50, 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            if (gameMode === 'arcade') {
+                ctx.font = '16px "Courier New", monospace';
+                ctx.fillStyle = '#FFD700';
+                ctx.textAlign = 'center';
+                ctx.fillText(`SCORE ${Math.max(0, Math.floor(arcadeScore))}`, canvas.width / 2, 54);
+            }
+
+            ctx.restore();
+        }
+
+        function drawRoundBanner(text, subText = '') {
+            ctx.save();
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillRect(0, canvas.height / 2 - 50, canvas.width, 100);
+            ctx.font = '32px "Courier New", monospace';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.textAlign = 'center';
+            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+            if (subText) {
+                ctx.font = '16px "Courier New", monospace';
+                ctx.fillStyle = '#FFD700';
+                ctx.fillText(subText, canvas.width / 2, canvas.height / 2 + 24);
+            }
+            ctx.restore();
+        }
+
+        // Game loop
+        function gameLoop() {
+            // Capture one-shot key presses for this frame
+            for (const key in keys) {
+                pressedKeys[key] = keys[key] && !prevKeys[key];
+                prevKeys[key] = keys[key];
+            }
+            if (gameWrapper.style.display === 'none') {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw background
+            ctx.drawImage(sceneImage, 0, 0, canvas.width, canvas.height);
+
+            // Update and draw
+            if (!matchOver) {
+                if (!roundActive) {
+                    if (roundStartTimer > 0) {
+                        roundStartTimer--;
+                    } else if (roundEndTimer > 0) {
+                        roundEndTimer--;
+                        if (roundEndTimer === 0) {
+                            currentRound++;
+                            if (currentRound > MAX_ROUNDS || playerRounds > MAX_ROUNDS / 2 || enemyRounds > MAX_ROUNDS / 2) {
+                                matchOver = true;
+                            } else {
+                                startRound();
+                            }
+                        }
+                    } else {
+                        roundActive = true;
+                    }
+                }
+
+                if (roundActive) {
+                    player.update(keys, pressedKeys, [enemy, ...objects]);
+                    enemy.updateAI(player, [player]);
+                }
+            }
+            
+            if (roundActive) {
+                projectiles.forEach((proj, index) => {
+                    proj.update([player, enemy, ...objects]);
+                    if (!proj.active) {
+                        projectiles.splice(index, 1);
+                    }
+                });
+            }
+
+            objects.forEach(obj => obj.update());
+            
+            debris.forEach((d, index) => {
+                d.update();
+                if (d.lifetime <= 0 || d.y > canvas.height) {
+                    debris.splice(index, 1);
+                }
+            });
+
+            // Draw everything
+            objects.forEach(obj => obj.draw());
+            projectiles.forEach(proj => proj.draw());
+            debris.forEach(d => d.draw());
+            player.draw();
+            enemy.draw();
+            ctx.drawImage(sceneForeground, 0, 0, canvas.width, canvas.height);
+            drawHud();
+
+            // Debug info
+            const debugInfo = document.getElementById('debug');
+            debugInfo.innerHTML = `
+                Animation: ${player.currentAnimation}<br>
+                Frame: ${player.frameIndex}<br>
+                Position: ${Math.floor(player.x)}, ${Math.floor(player.y)}<br>
+                Velocity: ${player.velocityX.toFixed(1)}, ${player.velocityY.toFixed(1)}<br>
+                Grounded: ${player.isGrounded}<br>
+                Locked: ${player.animationLocked}<br>
+                Hitboxes: ${player.hitboxes.length}<br>
+                Projectiles: ${projectiles.length}<br>
+                Flying Kick CD: ${player.flyingKickCooldown}
+            `;
+
+            if (!matchOver && roundActive) {
+                if (player.health <= 0 || enemy.health <= 0) {
+                    roundActive = false;
+                    roundEndTimer = 120;
+                    if (player.health <= 0 && enemy.health <= 0) {
+                        // Draw: no points
+                    } else if (player.health <= 0) {
+                        enemyRounds++;
+                    } else {
+                        playerRounds++;
+                    }
+                }
+            }
+
+            if (!matchOver && !roundActive) {
+                if (roundStartTimer > 0) {
+                    drawRoundBanner(`ROUND ${currentRound}`, 'FIGHT!');
+                } else if (roundEndTimer > 0) {
+                    const winnerText = player.health <= 0 ? 'ENEMY WINS' : 'PLAYER WINS';
+                    drawRoundBanner('KO', winnerText);
+                }
+            }
+
+            if (matchOver) {
+                const finalWinner = playerRounds >= enemyRounds ? 'PLAYER WINS' : 'ENEMY WINS';
+                drawRoundBanner('MATCH OVER', finalWinner);
+            }
+
+            if (matchOver && gameMode === 'arcade' && !arcadeResolving) {
+                arcadeResolving = true;
+                const playerWon = playerRounds > enemyRounds;
+                if (playerWon && arcadeStageIndex < arcadeStages.length - 1) {
+                    arcadeStageIndex++;
+                    const stage = arcadeStages[arcadeStageIndex];
+                    configureMatch({ playerId: currentPlayerId, enemyId: stage.enemy, sceneId: stage.scene });
+                    showArcadeTransition();
+                } else {
+                    finishArcade();
+                }
+            }
+
+            if (matchOver && gameMode === 'skirmish' && !skirmishResolving) {
+                skirmishResolving = true;
+                finishSkirmish();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start game when assets are loaded
+        let assetsLoaded = 0;
+        const totalAssets = imageManifest.length;
+        const showSpriteError = (fileName) => {
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Error: Could not load ${fileName}`, 50, 50);
+            ctx.fillText('Please make sure the asset is in the assets folder', 50, 80);
+        };
+
+        imageManifest.forEach(({ img, src }) => {
+            img.onload = () => {
+                assetsLoaded++;
+                if (assetsLoaded === totalAssets) {
+                    setScreen('menu');
+                    gameLoop();
+                }
+            };
+            img.onerror = () => showSpriteError(src);
+            img.src = src;
+        });
+    </script>
+</body>
+</html>
