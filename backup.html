@@ -370,6 +370,19 @@
             height: auto;
         }
 
+        #menuBanner {
+            width: 700px;
+            height: auto;
+            margin-top: -18px;
+            margin-bottom: 16px;
+            z-index: 1;
+        }
+
+        #menuTitle {
+            position: relative;
+            z-index: 2;
+        }
+
         #controls {
             position: absolute;
             top: 10px;
@@ -406,7 +419,8 @@
             <img src="assets/UI/BackButton.png" alt="Back">
         </button>
         <div id="menuScreen" class="screen active">
-            <img src="assets/UI/Title.png" alt="Title" style="width: 660px; margin-bottom: 48px;">
+            <img id="menuTitle" src="assets/UI/Title.png" alt="Title" style="width: 660px; margin-bottom: 0;">
+            <img id="menuBanner" src="assets/UI/character-banner.png" alt="Character Banner">
             <button id="btnArcade" class="menu-button">
                 <img src="assets/UI/ArcadeMode.png" alt="Arcade Mode">
             </button>
@@ -429,6 +443,9 @@
                 </button>
                 <button class="select-button" data-player="amelia2">
                     <img src="assets/Characters/CS_Amelia_2.png" alt="Amelia 2">
+                </button>
+                <button class="select-button" data-player="amelia3">
+                    <img src="assets/Characters/CS_Amelia_3.png" alt="Amelia 3">
                 </button>
             </div>
             <div class="select-card difficulty-card">
@@ -465,6 +482,9 @@
                         </button>
                         <button class="select-button" data-player="amelia2">
                             <img src="assets/Characters/CS_Amelia_2.png" alt="Amelia 2">
+                        </button>
+                        <button class="select-button" data-player="amelia3">
+                            <img src="assets/Characters/CS_Amelia_3.png" alt="Amelia 3">
                         </button>
                     </div>
                 </div>
@@ -628,7 +648,8 @@
         const images = {
             players: {
                 amelia1: new Image(),
-                amelia2: new Image()
+                amelia2: new Image(),
+                amelia3: new Image()
             },
             enemies: {
                 sand: new Image(),
@@ -638,6 +659,7 @@
             headshots: {
                 amelia1: new Image(),
                 amelia2: new Image(),
+                amelia3: new Image(),
                 sand: new Image(),
                 meme: new Image(),
                 starmer: new Image()
@@ -660,13 +682,15 @@
         };
 
         const imageManifest = [
-            { img: images.players.amelia1, src: 'assets/Characters/amelia-sprite-sheet.png' },
+            { img: images.players.amelia1, src: 'assets/Characters/amelia-1-sprite-sheet.png' },
             { img: images.players.amelia2, src: 'assets/Characters/amelia-2-sprite-sheet.png' },
+            { img: images.players.amelia3, src: 'assets/Characters/amelia-3-sprite-sheet.png' },
             { img: images.enemies.sand, src: 'assets/Characters/sand-sheet.png' },
             { img: images.enemies.meme, src: 'assets/Characters/meme-police-sheet.png' },
             { img: images.enemies.starmer, src: 'assets/Characters/starmer-sprite-sheet.png' },
             { img: images.headshots.amelia1, src: 'assets/Characters/CS_Amelia_1.png' },
             { img: images.headshots.amelia2, src: 'assets/Characters/CS_Amelia_2.png' },
+            { img: images.headshots.amelia3, src: 'assets/Characters/CS_Amelia_3.png' },
             { img: images.headshots.sand, src: 'assets/Characters/CS_Sand.png' },
             { img: images.headshots.meme, src: 'assets/Characters/CS_Meme_Police.png' },
             { img: images.headshots.starmer, src: 'assets/Characters/CS_Starmer.png' },
@@ -2080,8 +2104,8 @@
         };
         const difficultySettings = {
             easy: { enemyDamage: 0.65, enemyTaken: 1.2, scoreMultiplier: 1 },
-            medium: { enemyDamage: 0.8, enemyTaken: 1.1, scoreMultiplier: 1.15 },
-            hard: { enemyDamage: 1, enemyTaken: 1, scoreMultiplier: 1.35 }
+            medium: { enemyDamage: 1, enemyTaken: 5.1, scoreMultiplier: 1.15 },
+            hard: { enemyDamage: 1, enemyTaken: 1.1, scoreMultiplier: 1.15 }
         };
 
         const updateOverlayVisibility = () => {
@@ -2199,7 +2223,8 @@
 
         const applyScore = (delta) => {
             if (gameMode !== 'arcade') return;
-            arcadeScore = Math.max(0, arcadeScore + delta * getScoreMultiplier());
+            const adjusted = delta < 0 ? delta * 0.5 : delta;
+            arcadeScore = Math.max(0, arcadeScore + adjusted * getScoreMultiplier());
         };
         
         window.addEventListener('keydown', (e) => {
