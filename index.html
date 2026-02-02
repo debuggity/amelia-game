@@ -893,16 +893,24 @@
         let currentPlayerHeadshot = images.headshots.amelia1;
         let currentEnemyHeadshot = images.headshots.sand;
         let currentSceneButton = images.sceneButtons.scene1;
+        const REPO = 'amelia-game';
+        const BASE =
+        location.hostname.endsWith('github.io') ? `/${REPO}` : '';
+
+        const audio = (p) =>
+        new Audio(encodeURI(BASE ? `${BASE}/${p}` : p));
+
         const musicTracks = {
-            menu: new Audio('assets/music/Pixel Red Banner.mp3'),
-            select: new Audio('assets/music/Select Amelia.mp3'),
-            scene1: new Audio('assets/music/Barroom Brawl Bitcrush.mp3'),
-            scene2: new Audio('assets/music/Pixel Flags in the Thunder.mp3'),
-            scene3: new Audio('assets/music/Steel and Static.mp3'),
-            win: new Audio('assets/music/March of Pixel Hearts.mp3'),
-            lossA: new Audio('assets/music/Britain Is Lost.mp3'),
-            lossB: new Audio('assets/music/Purple Drain.mp3')
+            menu:   audio('assets/music/Pixel Red Banner.mp3'),
+            select: audio('assets/music/Select Amelia.mp3'),
+            scene1: audio('assets/music/Barroom Brawl Bitcrush.mp3'),
+            scene2: audio('assets/music/Pixel Flags in the Thunder.mp3'),
+            scene3: audio('assets/music/Steel and Static.mp3'),
+            win:    audio('assets/music/March of Pixel Hearts.mp3'),
+            lossA:  audio('assets/music/Britain Is Lost.mp3'),
+            lossB:  audio('assets/music/Purple Drain.mp3')
         };
+
         let activeTrack = null;
         let audioUnlocked = false;
         let masterVolume = 0.45;
