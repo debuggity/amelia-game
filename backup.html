@@ -260,6 +260,25 @@
             border-radius: 12px;
         }
 
+        #arcadeEndScreen .result-image {
+            width: 240px;
+            height: 240px;
+            object-fit: cover;
+            border-radius: 14px;
+        }
+
+        #arcadeResultText {
+            font-weight: 700;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        #arcadeResultSubtext {
+            font-size: 14px;
+            color: #e6e6e6;
+            text-align: center;
+        }
+
         #arcadeTransitionScreen .versus {
             display: flex;
             align-items: center;
@@ -332,33 +351,53 @@
             right: 10px;
         }
 
-        #helpButton {
+        #cornerControls {
             position: fixed;
             bottom: 24px;
             right: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 12px;
+            z-index: 12;
+        }
+
+        #helpContainer {
+            position: relative;
+        }
+
+        #cornerButtons {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #settingsButton,
+        #helpButton {
             background: transparent;
             border: none;
             cursor: pointer;
             padding: 0;
-            z-index: 12;
             transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
         }
 
+        #settingsButton img,
         #helpButton img {
-            width: 84px;
+            width: 100px;
             height: auto;
             display: block;
         }
 
+        #settingsButton.active,
         #helpButton.active {
             box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.8), 0 0 14px rgba(255, 215, 0, 0.45);
             border-radius: 10px;
         }
 
         #helpPopup {
-            position: fixed;
-            bottom: 24px;
-            right: 96px;
+            position: absolute;
+            bottom: -10px;
+            right: 222px;
             display: none;
             z-index: 11;
             pointer-events: none;
@@ -370,6 +409,89 @@
             height: auto;
         }
 
+        #settingsPopup {
+            position: absolute;
+            bottom: -4px;
+            right: 228px;
+            display: none;
+            z-index: 11;
+            pointer-events: auto;
+            width: 260px;
+            height: auto;
+        }
+
+        #settingsPopupImage {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #settingsPopupContent {
+            position: absolute;
+            top: 18%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            padding: 0 16px;
+            pointer-events: auto;
+        }
+
+        #volumeControl {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 8px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.35);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+            pointer-events: auto;
+            max-width: min(60vw, 240px);
+        }
+
+        #volumeIcon {
+            width: 32px;
+            height: auto;
+        }
+
+        #volumeSlider {
+            position: relative;
+            width: 140px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        #volumeBarFull,
+        #volumeBarEmpty {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100%;
+            height: auto;
+            pointer-events: none;
+        }
+
+        #volumeBarEmptyWrap {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            right: 0;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        #volumeKnob {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 22px;
+            height: auto;
+            pointer-events: none;
+        }
+
         #menuBanner {
             width: 700px;
             height: auto;
@@ -378,9 +500,24 @@
             z-index: 1;
         }
 
+        #menuTitleWrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0;
+        }
+
         #menuTitle {
             position: relative;
             z-index: 2;
+            transform-origin: center;
+            animation: titlePulse 6s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.035); }
         }
 
         #controls {
@@ -419,7 +556,9 @@
             <img src="assets/UI/BackButton.png" alt="Back">
         </button>
         <div id="menuScreen" class="screen active">
-            <img id="menuTitle" src="assets/UI/Title.png" alt="Title" style="width: 660px; margin-bottom: 0;">
+            <div id="menuTitleWrap">
+                <img id="menuTitle" src="assets/UI/Title.png" alt="Title" style="width: 660px; margin-bottom: 0;">
+            </div>
             <img id="menuBanner" src="assets/UI/character-banner.png" alt="Character Banner">
             <button id="btnArcade" class="menu-button">
                 <img src="assets/UI/ArcadeMode.png" alt="Arcade Mode">
@@ -555,7 +694,13 @@
                 <img src="assets/UI/BackButton.png" alt="Back">
             </button>
             <div class="screen-title">FINAL SCORE</div>
+            <img id="arcadeResultImage" class="result-image" src="" alt="Result">
+            <div id="arcadeResultText"></div>
+            <div id="arcadeResultSubtext"></div>
             <div id="arcadeScore">0</div>
+            <button id="btnArcadeEndContinue" class="menu-button">
+                <img src="assets/UI/ContinueButton2.png" alt="Continue">
+            </button>
         </div>
 
         <div id="skirmishEndScreen" class="screen">
@@ -610,12 +755,36 @@
         <div id="debug"></div>
     </div>
 
-    <div id="helpPopup">
-        <img src="assets/UI/controls.png" alt="Controls">
+    <div id="cornerControls">
+        <div id="helpContainer">
+            <div id="helpPopup">
+                <img src="assets/UI/controls.png" alt="Controls">
+            </div>
+            <div id="settingsPopup">
+                <img id="settingsPopupImage" src="assets/UI/settings-popup.png" alt="Settings">
+                <div id="settingsPopupContent">
+                    <div id="volumeControl">
+                        <img id="volumeIcon" src="assets/UI/volume-icon.png" alt="Volume">
+                        <div id="volumeSlider" aria-label="Volume">
+                            <img id="volumeBarFull" src="assets/UI/slider-bar-full.png" alt="">
+                            <div id="volumeBarEmptyWrap">
+                                <img id="volumeBarEmpty" src="assets/UI/slider-bar-empty.png" alt="">
+                            </div>
+                            <img id="volumeKnob" src="assets/UI/slider-knob.png" alt="Volume Knob">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="cornerButtons">
+                <button id="settingsButton" aria-pressed="false">
+                    <img src="assets/UI/small-settings.png" alt="Settings">
+                </button>
+                <button id="helpButton" aria-pressed="false">
+                    <img src="assets/UI/small-help.png" alt="Help">
+                </button>
+            </div>
+        </div>
     </div>
-    <button id="helpButton" aria-pressed="false">
-        <img src="assets/UI/small-help.png" alt="Help">
-    </button>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -626,7 +795,7 @@
 
         const GRAVITY = 0.35;
         const FALL_GRAVITY_MULTIPLIER = 0.35;
-        const DAMAGE_MULTIPLIER = 0.3;
+        const DAMAGE_MULTIPLIER = 0.33;
         const KNOCKBACK_X = 5;
         const KNOCKBACK_Y = -3;
         const SHOW_DEBUG_BOXES = false;
@@ -660,6 +829,12 @@
                 amelia1: new Image(),
                 amelia2: new Image(),
                 amelia3: new Image(),
+                celebrate1: new Image(),
+                celebrate2: new Image(),
+                celebrate3: new Image(),
+                lost1: new Image(),
+                lost2: new Image(),
+                lost3: new Image(),
                 sand: new Image(),
                 meme: new Image(),
                 starmer: new Image()
@@ -691,6 +866,12 @@
             { img: images.headshots.amelia1, src: 'assets/Characters/CS_Amelia_1.png' },
             { img: images.headshots.amelia2, src: 'assets/Characters/CS_Amelia_2.png' },
             { img: images.headshots.amelia3, src: 'assets/Characters/CS_Amelia_3.png' },
+            { img: images.headshots.celebrate1, src: 'assets/Characters/CS_Celebrate_1.png' },
+            { img: images.headshots.celebrate2, src: 'assets/Characters/CS_Celebrate_2.png' },
+            { img: images.headshots.celebrate3, src: 'assets/Characters/CS_Celebrate_3.png' },
+            { img: images.headshots.lost1, src: 'assets/Characters/CS_Lost_1.png' },
+            { img: images.headshots.lost2, src: 'assets/Characters/CS_Lost_2.png' },
+            { img: images.headshots.lost3, src: 'assets/Characters/CS_Lost_3.png' },
             { img: images.headshots.sand, src: 'assets/Characters/CS_Sand.png' },
             { img: images.headshots.meme, src: 'assets/Characters/CS_Meme_Police.png' },
             { img: images.headshots.starmer, src: 'assets/Characters/CS_Starmer.png' },
@@ -712,6 +893,31 @@
         let currentPlayerHeadshot = images.headshots.amelia1;
         let currentEnemyHeadshot = images.headshots.sand;
         let currentSceneButton = images.sceneButtons.scene1;
+        const REPO = 'amelia-game';
+        const BASE =
+        location.hostname.endsWith('github.io') ? `/${REPO}` : '';
+
+        const audio = (p) =>
+        new Audio(encodeURI(BASE ? `${BASE}/${p}` : p));
+
+        const musicTracks = {
+            menu:   audio('assets/music/Pixel Red Banner.mp3'),
+            select: audio('assets/music/Select Amelia.mp3'),
+            scene1: audio('assets/music/Barroom Brawl Bitcrush.mp3'),
+            scene2: audio('assets/music/Pixel Flags in the Thunder.mp3'),
+            scene3: audio('assets/music/Steel and Static.mp3'),
+            win:    audio('assets/music/March of Pixel Hearts.mp3'),
+            lossA:  audio('assets/music/Britain Is Lost.mp3'),
+            lossB:  audio('assets/music/Purple Drain.mp3')
+        };
+
+        let activeTrack = null;
+        let audioUnlocked = false;
+        let masterVolume = 0.45;
+        Object.values(musicTracks).forEach((track) => {
+            track.loop = true;
+            track.volume = masterVolume;
+        });
 
         // Animation definitions
         const animations = {
@@ -910,7 +1116,7 @@
                         // Crouch + A = Down Punch
                         if ((pressedKeys['a'] || pressedKeys['A']) && this.actionCooldown === 0) {
                             this.setAnimation('downPunch');
-                            this.createHitbox(35, 130, 90, 65, 15, 4, 6);
+                            this.createHitbox(35, 130, 90, 65, 12, 4, 6);
                             this.setActionCooldown();
                         }
                         // Crouch + S = Low Kick Forward
@@ -1467,6 +1673,16 @@
                 const isSandAI = currentEnemyId === 'sand' && this === enemy;
                 const isMemeAI = currentEnemyId === 'meme' && this === enemy;
                 const isStarmerAI = currentEnemyId === 'starmer' && this === enemy;
+                let incomingProjectile = null;
+                if (isStarmerAI) {
+                    incomingProjectile = projectiles.find((proj) => {
+                        if (!proj.active || proj.owner !== player) return false;
+                        const headingToward = proj.velocityX > 0 ? proj.x < this.x + this.width : proj.x > this.x;
+                        const nearX = Math.abs((proj.x + proj.width * 0.5) - (this.x + this.width * 0.5)) < 320;
+                        const nearY = proj.y + proj.height > this.y - 40 && proj.y < this.y + this.height - 10;
+                        return headingToward && nearX && nearY;
+                    });
+                }
                 if (isSandAI) {
                     this.sandImpatience = playerAttacking ? Math.max(0, this.sandImpatience - 1) : Math.min(120, this.sandImpatience + 1);
                 }
@@ -1515,6 +1731,12 @@
                     if (this.holdTimer === 1) {
                         this.holdKey = null;
                     }
+                    return this.update(this.aiKeys, this.aiPressed, objects);
+                }
+
+                if (isStarmerAI && incomingProjectile && this.isGrounded && this.jumpCooldown === 0) {
+                    this.pressKey('ArrowUp');
+                    this.jumpCooldown = 40;
                     return this.update(this.aiKeys, this.aiPressed, objects);
                 }
 
@@ -1672,7 +1894,7 @@
                         this.holdTimer = 24;
                         this.jumpCooldown = 30;
                     } else {
-                        if (absDistance < 220) {
+                        if (absDistance < 200) {
                             this.aiKeys['ArrowDown'] = true;
                             this.aiKeys[distance > 0 ? 'ArrowRight' : 'ArrowLeft'] = true;
                             this.aiPressed['s'] = true;
@@ -1688,6 +1910,10 @@
                     const retreatDir = this.moveDirection === 1 ? 'ArrowLeft' : 'ArrowRight';
                     this.aiKeys[retreatDir] = true;
                     if (this.attackCooldown === 0 && !avoidHitbox) {
+                        if (isStarmerAI && absDistance > 120) {
+                            this.aiKeys[distance > 0 ? 'ArrowRight' : 'ArrowLeft'] = true;
+                            return this.update(this.aiKeys, this.aiPressed, objects);
+                        }
                         if (isStarmerAI && absDistance > 80) {
                             this.pressKey('a');
                         } else {
@@ -1703,8 +1929,8 @@
                 }
 
                 // Basic approach/retreat movement
-                const approachDistance = isStarmerAI ? 170 : 220;
-                const retreatDistance = isStarmerAI ? 60 : 90;
+                const approachDistance = isStarmerAI ? 130 : 220;
+                const retreatDistance = isStarmerAI ? 50 : 90;
                 if (absDistance > approachDistance) {
                     this.aiKeys[this.moveDirection === 1 ? 'ArrowRight' : 'ArrowLeft'] = true;
                 } else if (absDistance < retreatDistance) {
@@ -1729,6 +1955,10 @@
                         this.pressKey('z');
                         this.attackCooldown = 28;
                     } else if (this.attackCooldown === 0 && strikeRangeGround) {
+                        if (isStarmerAI && absDistance > 120) {
+                            this.aiKeys[distance > 0 ? 'ArrowRight' : 'ArrowLeft'] = true;
+                            return this.update(this.aiKeys, this.aiPressed, objects);
+                        }
                         const roll = Math.random();
                         if (roll < 0.36) {
                             this.pressKey('a');
@@ -1741,7 +1971,11 @@
                         } else if (roll < 0.78) {
                             this.pressKey('s');
                         } else if (roll < 0.9) {
-                            this.pressKey('x');
+                            if (!isSandAI) {
+                                this.pressKey('x');
+                            } else {
+                                this.pressKey('s');
+                            }
                         } else if (roll < 0.98 && this.flyingKickCooldown === 0) {
                             this.pressKey('z');
                         } else {
@@ -2070,6 +2304,9 @@
         };
         const globalBack = document.getElementById('globalBack');
         const arcadeScoreEl = document.getElementById('arcadeScore');
+        const arcadeResultImage = document.getElementById('arcadeResultImage');
+        const arcadeResultText = document.getElementById('arcadeResultText');
+        const arcadeResultSubtext = document.getElementById('arcadeResultSubtext');
         const vsPlayerEl = document.getElementById('vsPlayer');
         const vsEnemyEl = document.getElementById('vsEnemy');
         const vsSceneEl = document.getElementById('vsScene');
@@ -2090,6 +2327,10 @@
         let arcadeSelection = 'amelia1';
         let currentDifficulty = 'medium';
         let arcadeDifficulty = 'medium';
+        let currentScreen = 'menu';
+        let lastMatchResult = null;
+        let lastArcadeLostTo = null;
+        let lastLossTrackKey = 'lossA';
 
         const arcadeStages = [
             { enemy: 'sand', scene: 'scene1', description: 'A storm brews in the dunes. The Sand Person rises to test your resolve.' },
@@ -2104,8 +2345,41 @@
         };
         const difficultySettings = {
             easy: { enemyDamage: 0.65, enemyTaken: 1.2, scoreMultiplier: 1 },
-            medium: { enemyDamage: 1, enemyTaken: 5.1, scoreMultiplier: 1.15 },
-            hard: { enemyDamage: 1, enemyTaken: 1.1, scoreMultiplier: 1.15 }
+            medium: { enemyDamage: 0.85, enemyTaken: 1, scoreMultiplier: 1.15 },
+            hard: { enemyDamage: 1.05, enemyTaken: 1, scoreMultiplier: 1.15 }
+        };
+
+        const pickLossTrackKey = () => {
+            lastLossTrackKey = lastLossTrackKey === 'lossA' ? 'lossB' : 'lossA';
+            return lastLossTrackKey;
+        };
+
+        const setMusic = (key) => {
+            const next = musicTracks[key];
+            if (!next) return;
+            if (activeTrack && activeTrack !== next) {
+                activeTrack.pause();
+                activeTrack.currentTime = 0;
+            }
+            activeTrack = next;
+            activeTrack.volume = masterVolume;
+            if (audioUnlocked) {
+                activeTrack.play().catch(() => {});
+            }
+        };
+
+        const updateMusic = () => {
+            let nextKey = 'menu';
+            if (currentScreen === 'menu' || currentScreen === 'options') {
+                nextKey = 'menu';
+            } else if (currentScreen === 'arcadeSelect' || currentScreen === 'skirmish') {
+                nextKey = 'select';
+            } else if (currentScreen === 'arcadeTransition' || currentScreen === 'game') {
+                nextKey = currentSceneId;
+            } else if (currentScreen === 'arcadeEnd' || currentScreen === 'skirmishEnd') {
+                nextKey = lastMatchResult === 'win' ? 'win' : lastLossTrackKey;
+            }
+            setMusic(nextKey);
         };
 
         const updateOverlayVisibility = () => {
@@ -2113,6 +2387,15 @@
             debugEl.style.display = debugVisible ? 'block' : 'none';
         };
         updateOverlayVisibility();
+
+        const closeCornerPopups = () => {
+            helpButton?.classList.remove('active');
+            settingsButton?.classList.remove('active');
+            if (helpButton) helpButton.setAttribute('aria-pressed', 'false');
+            if (settingsButton) settingsButton.setAttribute('aria-pressed', 'false');
+            if (helpPopup) helpPopup.style.display = 'none';
+            if (settingsPopup) settingsPopup.style.display = 'none';
+        };
 
         const setScreen = (name) => {
             Object.values(screens).forEach((screen) => screen.classList.remove('active'));
@@ -2123,6 +2406,9 @@
             controlsVisible = inGame ? controlsVisible : false;
             debugVisible = inGame ? debugVisible : false;
             updateOverlayVisibility();
+            currentScreen = name;
+            updateMusic();
+            closeCornerPopups();
             if (name === 'menu') {
                 gameMode = 'menu';
             }
@@ -2141,6 +2427,9 @@
             currentSceneButton = images.sceneButtons[sceneId];
             if (player) player.sprite = spriteSheet;
             if (enemy) enemy.sprite = enemySpriteSheet;
+            if (currentScreen === 'game' || currentScreen === 'arcadeTransition') {
+                updateMusic();
+            }
         };
 
         const applyDifficulty = (difficulty) => {
@@ -2184,6 +2473,7 @@
             gameMode = 'arcade';
             arcadeScore = 0;
             arcadeStageIndex = 0;
+            lastArcadeLostTo = null;
             const stage = arcadeStages[arcadeStageIndex];
             configureMatch({ playerId, enemyId: stage.enemy, sceneId: stage.scene });
             showArcadeTransition();
@@ -2201,6 +2491,36 @@
         };
 
         const finishArcade = () => {
+            const playerWon = playerRounds > enemyRounds;
+            lastMatchResult = playerWon ? 'win' : 'loss';
+            if (!playerWon) {
+                pickLossTrackKey();
+            }
+            const celebrateMap = {
+                amelia1: images.headshots.celebrate1,
+                amelia2: images.headshots.celebrate2,
+                amelia3: images.headshots.celebrate3
+            };
+            const lostMap = {
+                amelia1: images.headshots.lost1,
+                amelia2: images.headshots.lost2,
+                amelia3: images.headshots.lost3
+            };
+            const resultImage = playerWon ? celebrateMap[currentPlayerId] : lostMap[currentPlayerId];
+            if (resultImage) {
+                arcadeResultImage.src = resultImage.src;
+                arcadeResultImage.style.display = 'block';
+            } else {
+                arcadeResultImage.style.display = 'none';
+            }
+            arcadeResultText.textContent = playerWon ? 'YOU WON!' : 'YOU LOST...';
+            arcadeResultText.style.color = playerWon ? '#00FF66' : '#FF3333';
+            if (playerWon) {
+                arcadeResultSubtext.textContent = 'Britain is saved.';
+            } else {
+                const foe = lastArcadeLostTo ? lastArcadeLostTo.toUpperCase() : 'THE ENEMY';
+                arcadeResultSubtext.textContent = `Fell to ${foe}.`;
+            }
             const bonus = Math.max(0, Math.floor(player.health * 10));
             const finalScore = Math.max(0, Math.floor(arcadeScore + bonus * getScoreMultiplier()));
             arcadeScoreEl.textContent = finalScore;
@@ -2209,14 +2529,30 @@
 
         const finishSkirmish = () => {
             const playerWon = playerRounds > enemyRounds;
+            lastMatchResult = playerWon ? 'win' : 'loss';
+            if (!playerWon) {
+                pickLossTrackKey();
+            }
+            const celebrateMap = {
+                amelia1: images.headshots.celebrate1,
+                amelia2: images.headshots.celebrate2,
+                amelia3: images.headshots.celebrate3
+            };
+            const lostMap = {
+                amelia1: images.headshots.lost1,
+                amelia2: images.headshots.lost2,
+                amelia3: images.headshots.lost3
+            };
+            const resultImage = playerWon ? celebrateMap[currentPlayerId] : lostMap[currentPlayerId];
+            if (resultImage) {
+                skirmishWinnerHeadshot.src = resultImage.src;
+            }
             if (playerWon) {
                 skirmishOutcomeText.textContent = 'You won! Britain is saved!';
                 skirmishOutcomeText.style.color = '#00FF66';
-                skirmishWinnerHeadshot.src = currentPlayerHeadshot.src;
             } else {
                 skirmishOutcomeText.textContent = 'You lost... Britain has fallen.';
                 skirmishOutcomeText.style.color = '#FF3333';
-                skirmishWinnerHeadshot.src = currentEnemyHeadshot.src;
             }
             setScreen('skirmishEnd');
         };
@@ -2246,10 +2582,17 @@
 
         document.getElementById('btnArcade').addEventListener('click', () => setScreen('arcadeSelect'));
         document.getElementById('btnSkirmish').addEventListener('click', () => setScreen('skirmish'));
-        document.getElementById('btnOptions').addEventListener('click', () => setScreen('options'));
+        const optionsButton = document.getElementById('btnOptions');
+        optionsButton.addEventListener('click', () => {
+            if (currentScreen !== 'menu') {
+                setScreen('menu');
+            }
+            toggleSettings();
+        });
         document.getElementById('btnCloseOptions').addEventListener('click', () => setScreen('menu'));
         document.getElementById('btnSkirmishContinue').addEventListener('click', () => setScreen('menu'));
         document.getElementById('btnArcadeContinue').addEventListener('click', () => startMatch());
+        document.getElementById('btnArcadeEndContinue').addEventListener('click', () => setScreen('menu'));
         document.querySelectorAll('[data-back]').forEach((btn) => {
             btn.addEventListener('click', () => setScreen('menu'));
         });
@@ -2311,12 +2654,106 @@
 
         const helpButton = document.getElementById('helpButton');
         const helpPopup = document.getElementById('helpPopup');
+        const settingsButton = document.getElementById('settingsButton');
+        const settingsPopup = document.getElementById('settingsPopup');
         const toggleHelp = () => {
-            const isActive = helpButton.classList.toggle('active');
-            helpButton.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-            helpPopup.style.display = isActive ? 'block' : 'none';
+            const willOpen = !helpButton.classList.contains('active');
+            settingsButton.classList.remove('active');
+            settingsButton.setAttribute('aria-pressed', 'false');
+            settingsPopup.style.display = 'none';
+            helpButton.classList.toggle('active', willOpen);
+            helpButton.setAttribute('aria-pressed', willOpen ? 'true' : 'false');
+            helpPopup.style.display = willOpen ? 'block' : 'none';
         };
         helpButton.addEventListener('click', toggleHelp);
+
+        const toggleSettings = () => {
+            const willOpen = !settingsButton.classList.contains('active');
+            helpButton.classList.remove('active');
+            helpButton.setAttribute('aria-pressed', 'false');
+            helpPopup.style.display = 'none';
+            settingsButton.classList.toggle('active', willOpen);
+            settingsButton.setAttribute('aria-pressed', willOpen ? 'true' : 'false');
+            settingsPopup.style.display = willOpen ? 'block' : 'none';
+        };
+        settingsButton.addEventListener('click', toggleSettings);
+
+        document.addEventListener('pointerdown', (event) => {
+            const target = event.target;
+            const insideHelp = helpPopup.contains(target) || helpButton.contains(target);
+            const insideSettings = settingsPopup.contains(target) || settingsButton.contains(target);
+            const insideOptions = optionsButton.contains(target);
+            if (insideHelp || insideSettings || insideOptions) return;
+            closeCornerPopups();
+        });
+
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeKnob = document.getElementById('volumeKnob');
+        const volumeBarEmptyWrap = document.getElementById('volumeBarEmptyWrap');
+        const volumeBarEmpty = document.getElementById('volumeBarEmpty');
+        let volumeDragging = false;
+
+        const updateVolumeUI = () => {
+            const sliderWidth = volumeSlider.clientWidth;
+            if (!sliderWidth) return;
+            const knobX = masterVolume * sliderWidth;
+            volumeKnob.style.left = `${knobX}px`;
+            volumeBarEmptyWrap.style.left = `${knobX}px`;
+            volumeBarEmptyWrap.style.width = `${Math.max(0, sliderWidth - knobX)}px`;
+            volumeBarEmpty.style.width = `${sliderWidth}px`;
+            volumeBarEmpty.style.left = `-${knobX}px`;
+        };
+
+        const setVolume = (value) => {
+            masterVolume = Math.min(1, Math.max(0, value));
+            if (activeTrack) {
+                activeTrack.volume = masterVolume;
+            }
+            updateVolumeUI();
+        };
+
+        const handleVolumePointer = (event) => {
+            const rect = volumeSlider.getBoundingClientRect();
+            const x = Math.min(rect.width, Math.max(0, event.clientX - rect.left));
+            setVolume(x / rect.width);
+        };
+
+        volumeSlider.addEventListener('pointerdown', (event) => {
+            if (!audioUnlocked) {
+                audioUnlocked = true;
+                updateMusic();
+            }
+            volumeDragging = true;
+            volumeSlider.setPointerCapture(event.pointerId);
+            handleVolumePointer(event);
+        });
+        volumeSlider.addEventListener('pointermove', (event) => {
+            if (!volumeDragging) return;
+            handleVolumePointer(event);
+        });
+        volumeSlider.addEventListener('pointerup', (event) => {
+            volumeDragging = false;
+            volumeSlider.releasePointerCapture(event.pointerId);
+        });
+        volumeSlider.addEventListener('pointercancel', () => {
+            volumeDragging = false;
+        });
+
+        const unlockAudio = () => {
+            if (audioUnlocked) return;
+            audioUnlocked = true;
+            updateMusic();
+        };
+        document.addEventListener('pointerdown', unlockAudio, { once: true });
+        document.addEventListener('keydown', unlockAudio, { once: true });
+        const scheduleVolumeSync = () => {
+            requestAnimationFrame(() => setVolume(masterVolume));
+        };
+        const volumeObserver = new ResizeObserver(scheduleVolumeSync);
+        volumeObserver.observe(volumeSlider);
+        window.addEventListener('load', scheduleVolumeSync);
+        window.addEventListener('resize', scheduleVolumeSync);
+        scheduleVolumeSync();
 
         function startRound() {
             player.resetState(200, true);
@@ -2534,6 +2971,9 @@
             if (matchOver && gameMode === 'arcade' && !arcadeResolving) {
                 arcadeResolving = true;
                 const playerWon = playerRounds > enemyRounds;
+                if (!playerWon) {
+                    lastArcadeLostTo = currentEnemyId;
+                }
                 if (playerWon && arcadeStageIndex < arcadeStages.length - 1) {
                     arcadeStageIndex++;
                     const stage = arcadeStages[arcadeStageIndex];
