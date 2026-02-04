@@ -63,6 +63,47 @@
             display: flex;
         }
 
+        #menuScaleWrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scale-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .scale-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            transform-origin: center center;
+        }
+
+        #menuScreen {
+            justify-content: center;
+            padding: 0;
+        }
+
+        #menuContent {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            transform-origin: center center;
+        }
+
+        #arcadeSelectScreen,
+        #skirmishScreen {
+            justify-content: center;
+            padding: 0;
+        }
+
         .menu-button,
         .select-button,
         .start-button,
@@ -556,67 +597,34 @@
             <img src="assets/UI/BackButton.png" alt="Back">
         </button>
         <div id="menuScreen" class="screen active">
-            <div id="menuTitleWrap">
-                <img id="menuTitle" src="assets/UI/Title.png" alt="Title" style="width: 660px; margin-bottom: 0;">
+            <div id="menuScaleWrap">
+                <div id="menuContent">
+                    <div id="menuTitleWrap">
+                        <img id="menuTitle" src="assets/UI/Title.png" alt="Title" style="width: 660px; margin-bottom: 0;">
+                    </div>
+                    <img id="menuBanner" src="assets/UI/character-banner.png" alt="Character Banner">
+                    <button id="btnArcade" class="menu-button">
+                        <img src="assets/UI/ArcadeMode.png" alt="Arcade Mode">
+                    </button>
+                    <button id="btnSkirmish" class="menu-button">
+                        <img src="assets/UI/Skrimish.png" alt="Skirmish">
+                    </button>
+                    <button id="btnOptions" class="menu-button">
+                        <img src="assets/UI/Options.png" alt="Options">
+                    </button>
+                </div>
             </div>
-            <img id="menuBanner" src="assets/UI/character-banner.png" alt="Character Banner">
-            <button id="btnArcade" class="menu-button">
-                <img src="assets/UI/ArcadeMode.png" alt="Arcade Mode">
-            </button>
-            <button id="btnSkirmish" class="menu-button">
-                <img src="assets/UI/Skrimish.png" alt="Skirmish">
-            </button>
-            <button id="btnOptions" class="menu-button">
-                <img src="assets/UI/Options.png" alt="Options">
-            </button>
         </div>
 
         <div id="arcadeSelectScreen" class="screen">
             <button class="back-button" data-back="menu">
                 <img src="assets/UI/BackButton.png" alt="Back">
             </button>
-            <div class="screen-title">CHOOSE YOUR AMELIA</div>
-            <div class="select-row">
-                <button class="select-button" data-player="amelia1">
-                    <img src="assets/Characters/CS_Amelia_1.png" alt="Amelia 1">
-                </button>
-                <button class="select-button" data-player="amelia2">
-                    <img src="assets/Characters/CS_Amelia_2.png" alt="Amelia 2">
-                </button>
-                <button class="select-button" data-player="amelia3">
-                    <img src="assets/Characters/CS_Amelia_3.png" alt="Amelia 3">
-                </button>
-            </div>
-            <div class="select-card difficulty-card">
-                <div>DIFFICULTY</div>
-                <div class="select-row">
-                    <button class="select-button" data-difficulty="easy">
-                        <img src="assets/UI/EasyButton.png" alt="Easy">
-                    </button>
-                    <button class="select-button selected" data-difficulty="medium">
-                        <img src="assets/UI/MediumButton.png" alt="Medium">
-                    </button>
-                    <button class="select-button" data-difficulty="hard">
-                        <img src="assets/UI/HardButton.png" alt="Hard">
-                    </button>
-                </div>
-            </div>
-            <div class="section-divider"></div>
-            <button id="btnArcadeSelectContinue" class="menu-button">
-                <img src="assets/UI/ContinueButton2.png" alt="Continue">
-            </button>
-        </div>
-
-        <div id="skirmishScreen" class="screen">
-            <button class="back-button" data-back="menu">
-                <img src="assets/UI/BackButton.png" alt="Back">
-            </button>
-            <div class="screen-title">SKIRMISH</div>
-            <div class="select-row">
-                <div class="select-card player-card">
-                    <div>PLAYER</div>
+            <div id="arcadeSelectScaleWrap" class="scale-wrap">
+                <div id="arcadeSelectContent" class="scale-content">
+                    <div class="screen-title">CHOOSE YOUR AMELIA</div>
                     <div class="select-row">
-                        <button class="select-button selected" data-player="amelia1">
+                        <button class="select-button" data-player="amelia1">
                             <img src="assets/Characters/CS_Amelia_1.png" alt="Amelia 1">
                         </button>
                         <button class="select-button" data-player="amelia2">
@@ -626,54 +634,99 @@
                             <img src="assets/Characters/CS_Amelia_3.png" alt="Amelia 3">
                         </button>
                     </div>
-                </div>
-                <div class="select-card enemy-card">
-                    <div>ENEMY</div>
-                    <div class="select-row">
-                        <button class="select-button selected" data-enemy="sand">
-                            <img src="assets/Characters/CS_Sand.png" alt="Sand">
-                        </button>
-                        <button class="select-button" data-enemy="meme">
-                            <img src="assets/Characters/CS_Meme_Police.png" alt="Meme Police">
-                        </button>
-                        <button class="select-button" data-enemy="starmer">
-                            <img src="assets/Characters/CS_Starmer.png" alt="Starmer">
-                        </button>
+                    <div class="select-card difficulty-card">
+                        <div>DIFFICULTY</div>
+                        <div class="select-row">
+                            <button class="select-button" data-difficulty="easy">
+                                <img src="assets/UI/EasyButton.png" alt="Easy">
+                            </button>
+                            <button class="select-button selected" data-difficulty="medium">
+                                <img src="assets/UI/MediumButton.png" alt="Medium">
+                            </button>
+                            <button class="select-button" data-difficulty="hard">
+                                <img src="assets/UI/HardButton.png" alt="Hard">
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="select-card scene-card">
-                    <div>SCENE</div>
-                    <div class="select-row">
-                        <button class="select-button" data-scene="scene1">
-                            <img src="assets/Scenes/scene-1-button.png" alt="Scene 1">
-                        </button>
-                        <button class="select-button" data-scene="scene2">
-                            <img src="assets/Scenes/scene-2-button.png" alt="Scene 2">
-                        </button>
-                        <button class="select-button" data-scene="scene3">
-                            <img src="assets/Scenes/scene-3-button.png" alt="Scene 3">
-                        </button>
-                    </div>
-                </div>
-                <div class="select-card difficulty-card">
-                    <div>DIFFICULTY</div>
-                    <div class="select-row">
-                        <button class="select-button" data-difficulty="easy">
-                            <img src="assets/UI/EasyButton.png" alt="Easy">
-                        </button>
-                        <button class="select-button selected" data-difficulty="medium">
-                            <img src="assets/UI/MediumButton.png" alt="Medium">
-                        </button>
-                        <button class="select-button" data-difficulty="hard">
-                            <img src="assets/UI/HardButton.png" alt="Hard">
-                        </button>
-                    </div>
+                    <div class="section-divider"></div>
+                    <button id="btnArcadeSelectContinue" class="menu-button">
+                        <img src="assets/UI/ContinueButton2.png" alt="Continue">
+                    </button>
                 </div>
             </div>
-            <div class="section-divider"></div>
-            <button id="btnSkirmishStart" class="menu-button">
-                <img src="assets/UI/ContinueButton2.png" alt="Continue">
+        </div>
+
+        <div id="skirmishScreen" class="screen">
+            <button class="back-button" data-back="menu">
+                <img src="assets/UI/BackButton.png" alt="Back">
             </button>
+            <div id="skirmishScaleWrap" class="scale-wrap">
+                <div id="skirmishContent" class="scale-content">
+                    <div class="screen-title">SKIRMISH</div>
+                    <div class="select-row">
+                        <div class="select-card player-card">
+                            <div>PLAYER</div>
+                            <div class="select-row">
+                                <button class="select-button selected" data-player="amelia1">
+                                    <img src="assets/Characters/CS_Amelia_1.png" alt="Amelia 1">
+                                </button>
+                                <button class="select-button" data-player="amelia2">
+                                    <img src="assets/Characters/CS_Amelia_2.png" alt="Amelia 2">
+                                </button>
+                                <button class="select-button" data-player="amelia3">
+                                    <img src="assets/Characters/CS_Amelia_3.png" alt="Amelia 3">
+                                </button>
+                            </div>
+                        </div>
+                        <div class="select-card enemy-card">
+                            <div>ENEMY</div>
+                            <div class="select-row">
+                                <button class="select-button selected" data-enemy="sand">
+                                    <img src="assets/Characters/CS_Sand.png" alt="Sand">
+                                </button>
+                                <button class="select-button" data-enemy="meme">
+                                    <img src="assets/Characters/CS_Meme_Police.png" alt="Meme Police">
+                                </button>
+                                <button class="select-button" data-enemy="starmer">
+                                    <img src="assets/Characters/CS_Starmer.png" alt="Starmer">
+                                </button>
+                            </div>
+                        </div>
+                        <div class="select-card scene-card">
+                            <div>SCENE</div>
+                            <div class="select-row">
+                                <button class="select-button" data-scene="scene1">
+                                    <img src="assets/Scenes/scene-1-button.png" alt="Scene 1">
+                                </button>
+                                <button class="select-button" data-scene="scene2">
+                                    <img src="assets/Scenes/scene-2-button.png" alt="Scene 2">
+                                </button>
+                                <button class="select-button" data-scene="scene3">
+                                    <img src="assets/Scenes/scene-3-button.png" alt="Scene 3">
+                                </button>
+                            </div>
+                        </div>
+                        <div class="select-card difficulty-card">
+                            <div>DIFFICULTY</div>
+                            <div class="select-row">
+                                <button class="select-button" data-difficulty="easy">
+                                    <img src="assets/UI/EasyButton.png" alt="Easy">
+                                </button>
+                                <button class="select-button selected" data-difficulty="medium">
+                                    <img src="assets/UI/MediumButton.png" alt="Medium">
+                                </button>
+                                <button class="select-button" data-difficulty="hard">
+                                    <img src="assets/UI/HardButton.png" alt="Hard">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-divider"></div>
+                    <button id="btnSkirmishStart" class="menu-button">
+                        <img src="assets/UI/ContinueButton2.png" alt="Continue">
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div id="arcadeTransitionScreen" class="screen">
@@ -2313,6 +2366,15 @@
         const arcadeTransitionText = document.getElementById('arcadeTransitionText');
         const skirmishOutcomeText = document.getElementById('skirmishOutcomeText');
         const skirmishWinnerHeadshot = document.getElementById('skirmishWinnerHeadshot');
+        const menuScreen = document.getElementById('menuScreen');
+        const menuScaleWrap = document.getElementById('menuScaleWrap');
+        const menuContent = document.getElementById('menuContent');
+        const arcadeSelectScreen = document.getElementById('arcadeSelectScreen');
+        const arcadeSelectScaleWrap = document.getElementById('arcadeSelectScaleWrap');
+        const arcadeSelectContent = document.getElementById('arcadeSelectContent');
+        const skirmishScreen = document.getElementById('skirmishScreen');
+        const skirmishScaleWrap = document.getElementById('skirmishScaleWrap');
+        const skirmishContent = document.getElementById('skirmishContent');
 
         let controlsVisible = false;
         let debugVisible = false;
@@ -2411,8 +2473,73 @@
             closeCornerPopups();
             if (name === 'menu') {
                 gameMode = 'menu';
+                fitMenuToViewport();
+            }
+            if (name === 'arcadeSelect') {
+                fitScreenToViewport(arcadeSelectScreen, arcadeSelectScaleWrap, arcadeSelectContent);
+            }
+            if (name === 'skirmish') {
+                fitScreenToViewport(skirmishScreen, skirmishScaleWrap, skirmishContent);
             }
         };
+
+        const fitScreenToViewport = (screen, wrap, content) => {
+            if (!screen || !wrap || !content) return;
+            content.style.transform = 'scale(1)';
+            wrap.style.width = 'auto';
+            wrap.style.height = 'auto';
+
+            const screenStyles = window.getComputedStyle(screen);
+            const paddingTop = parseFloat(screenStyles.paddingTop) || 0;
+            const paddingBottom = parseFloat(screenStyles.paddingBottom) || 0;
+            const availableHeight = Math.max(0, screen.clientHeight - paddingTop - paddingBottom - 8);
+            const availableWidth = Math.max(0, screen.clientWidth - 24);
+            const rect = content.getBoundingClientRect();
+            if (!rect.height || !rect.width) return;
+            const scale = Math.min(1, availableHeight / rect.height, availableWidth / rect.width);
+            content.style.transform = `scale(${scale})`;
+            wrap.style.width = `${rect.width * scale}px`;
+            wrap.style.height = `${rect.height * scale}px`;
+        };
+
+        const fitMenuToViewport = () => {
+            if (!menuScreen || !menuScaleWrap || !menuContent) return;
+            menuContent.style.transform = 'scale(1)';
+            menuScaleWrap.style.width = 'auto';
+            menuScaleWrap.style.height = 'auto';
+
+            const menuStyles = window.getComputedStyle(menuScreen);
+            const paddingTop = parseFloat(menuStyles.paddingTop) || 0;
+            const paddingBottom = parseFloat(menuStyles.paddingBottom) || 0;
+            const availableHeight = Math.max(0, menuScreen.clientHeight - paddingTop - paddingBottom - 8);
+            const availableWidth = Math.max(0, menuScreen.clientWidth - 24);
+            const rect = menuContent.getBoundingClientRect();
+            if (!rect.height || !rect.width) return;
+            const scale = Math.min(1, availableHeight / rect.height, availableWidth / rect.width);
+            menuContent.style.transform = `scale(${scale})`;
+            menuScaleWrap.style.width = `${rect.width * scale}px`;
+            menuScaleWrap.style.height = `${rect.height * scale}px`;
+        };
+        window.addEventListener('resize', fitMenuToViewport);
+        window.addEventListener('resize', () => {
+            fitScreenToViewport(arcadeSelectScreen, arcadeSelectScaleWrap, arcadeSelectContent);
+            fitScreenToViewport(skirmishScreen, skirmishScaleWrap, skirmishContent);
+        });
+
+        const setupScaleObservers = () => {
+            if (!window.ResizeObserver) return;
+            const observe = (screen, wrap, content) => {
+                if (!content) return;
+                const observer = new ResizeObserver(() => {
+                    fitScreenToViewport(screen, wrap, content);
+                });
+                observer.observe(content);
+            };
+            observe(arcadeSelectScreen, arcadeSelectScaleWrap, arcadeSelectContent);
+            observe(skirmishScreen, skirmishScaleWrap, skirmishContent);
+            observe(menuScreen, menuScaleWrap, menuContent);
+        };
+        setupScaleObservers();
 
         const configureMatch = ({ playerId, enemyId, sceneId }) => {
             currentPlayerId = playerId;
