@@ -13,15 +13,58 @@
 
         body {
             overflow: hidden;
-            background: radial-gradient(circle at 20% 15%, rgba(170, 80, 235, 0.6), transparent 48%),
-                        radial-gradient(circle at 80% 12%, rgba(110, 30, 150, 0.55), transparent 55%),
-                        radial-gradient(circle at 50% 85%, rgba(70, 20, 100, 0.45), transparent 60%),
-                        linear-gradient(180deg, #2f1142 0%, #1e0a2a 55%, #120714 100%);
+            --bg-main: radial-gradient(circle at 20% 15%, rgba(170, 80, 235, 0.6), transparent 48%),
+                       radial-gradient(circle at 80% 12%, rgba(110, 30, 150, 0.55), transparent 55%),
+                       radial-gradient(circle at 50% 85%, rgba(70, 20, 100, 0.45), transparent 60%),
+                       linear-gradient(180deg, #2f1142 0%, #1e0a2a 55%, #120714 100%);
+            background: var(--bg-main);
             font-family: 'Courier New', monospace;
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            -webkit-user-drag: none;
+            -webkit-touch-callout: none;
+        }
+
+        body.bg-purple {
+            --bg-main: linear-gradient(160deg, #3a0b5a 0%, #4b1175 45%, #26083f 100%);
+        }
+
+        body.bg-hearts {
+            --bg-main: linear-gradient(120deg, #2a0a3c 0%, #4a1671 35%, #6a1b9a 65%, #3b0f59 100%);
+            background-size: 300% 300%;
+            animation: purpleShift 18s ease-in-out infinite;
+        }
+
+        @keyframes purpleShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        img,
+        button,
+        canvas,
+        #uiRoot,
+        #gameWrapper,
+        #cornerControls {
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            -webkit-user-drag: none;
+            -webkit-touch-callout: none;
+        }
+
+        img {
+            pointer-events: none;
+        }
+
+        button img {
+            pointer-events: none;
         }
 
         #gameCanvas {
@@ -46,6 +89,33 @@
             pointer-events: none;
         }
 
+        #heartsLayer {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            overflow: hidden;
+            display: none;
+            z-index: 0;
+        }
+
+        body.bg-hearts #heartsLayer {
+            display: block;
+        }
+
+        .heart {
+            position: absolute;
+            font-size: 18px;
+            opacity: 0.65;
+            filter: drop-shadow(0 4px 8px rgba(78, 24, 120, 0.5));
+            animation: floatUp 12s linear infinite;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(110vh) translateX(0) scale(0.9) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.7; }
+            100% { transform: translateY(-20vh) translateX(20px) scale(1.1) rotate(8deg); opacity: 0; }
+        }
+
         .screen {
             position: absolute;
             inset: 0;
@@ -61,6 +131,47 @@
 
         .screen.active {
             display: flex;
+        }
+
+        #menuScaleWrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scale-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .scale-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            transform-origin: center center;
+        }
+
+        #menuScreen {
+            justify-content: center;
+            padding: 0;
+        }
+
+        #menuContent {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            transform-origin: center center;
+        }
+
+        #arcadeSelectScreen,
+        #skirmishScreen {
+            justify-content: center;
+            padding: 0;
         }
 
         .menu-button,
@@ -248,6 +359,15 @@
             letter-spacing: 2px;
         }
 
+        .mode-description {
+            max-width: 640px;
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #e8e0f2;
+            margin-top: -6px;
+        }
+
         #skirmishOutcomeText {
             font-weight: 700;
             font-size: 20px;
@@ -312,9 +432,19 @@
             width: 180px;
         }
 
+        #arcadeSelectScreen .select-row {
+            flex-wrap: nowrap;
+        }
+
         #arcadeSelectScreen .select-button img {
-            height: 220px;
+            height: clamp(140px, 22vh, 220px);
             width: auto;
+        }
+
+        @media (max-width: 900px), (max-height: 650px) {
+            #arcadeSelectScreen .select-row {
+                gap: 12px;
+            }
         }
 
         #arcadeSelectScreen [data-difficulty] img {
@@ -337,6 +467,18 @@
         #optionsModal img {
             width: 520px;
             max-width: 90vw;
+            height: auto;
+        }
+
+        @media (max-width: 520px) {
+            #optionsModal img {
+                transform: scale(0.5);
+                transform-origin: 50% 50%;
+            }
+        }
+
+        .tips-image {
+            width: min(520px, 90vw);
             height: auto;
         }
 
@@ -409,6 +551,13 @@
             height: auto;
         }
 
+        @media (max-width: 980px), (max-height: 760px) {
+            #helpPopup {
+                transform: scale(0.5);
+                transform-origin: 100% 100%;
+            }
+        }
+
         #settingsPopup {
             position: absolute;
             bottom: -4px;
@@ -432,6 +581,9 @@
             left: 50%;
             transform: translateX(-50%);
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
             justify-content: center;
             width: 100%;
             padding: 0 16px;
@@ -448,6 +600,118 @@
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
             pointer-events: auto;
             max-width: min(60vw, 240px);
+        }
+
+        .settings-section {
+            width: min(220px, 70vw);
+            background: rgba(0, 0, 0, 0.28);
+            border-radius: 12px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .settings-title {
+            font-size: 11px;
+            letter-spacing: 1.4px;
+            color: #f0d7ff;
+            text-align: center;
+        }
+
+        .bg-options {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .bg-option {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 10px;
+            padding: 6px 4px;
+            cursor: pointer;
+            transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+            color: #f4e9ff;
+            font-size: 10px;
+            letter-spacing: 0.6px;
+        }
+
+        .bg-option:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+        }
+
+        .bg-option.active {
+            box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.7), 0 0 10px rgba(255, 215, 0, 0.35);
+        }
+
+        .bg-swatch {
+            height: 22px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bg-swatch.default {
+            background: radial-gradient(circle at 20% 20%, rgba(170, 80, 235, 0.7), transparent 45%),
+                        linear-gradient(180deg, #2f1142 0%, #1e0a2a 55%, #120714 100%);
+        }
+
+        .bg-swatch.purple {
+            background: linear-gradient(160deg, #3a0b5a 0%, #4b1175 45%, #26083f 100%);
+        }
+
+        .bg-swatch.hearts {
+            background: linear-gradient(120deg, #2a0a3c 0%, #4a1671 50%, #6a1b9a 100%);
+        }
+
+        .bg-swatch.hearts::after {
+            content: "💜  💜  💜";
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            opacity: 0.7;
+            letter-spacing: 2px;
+            text-shadow: 0 0 6px rgba(120, 50, 160, 0.6);
+        }
+
+        .link-button {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+            pointer-events: auto;
+        }
+
+        .link-button img {
+            display: block;
+            width: 170px;
+            height: auto;
+        }
+
+        .link-button:hover {
+            transform: translateY(-1px) scale(1.01);
+            filter: brightness(1.06);
+        }
+
+        .link-button:active {
+            transform: translateY(1px) scale(0.98);
+        }
+
+        .link-button.about-button img {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.45);
+            border-radius: 10px;
+            filter: brightness(0.86);
         }
 
         #volumeIcon {
@@ -551,72 +815,54 @@
     </style>
 </head>
 <body>
+    <div id="heartsLayer" aria-hidden="true">
+        <span class="heart" style="left: 6%; animation-delay: 0s; animation-duration: 12s;">💜</span>
+        <span class="heart" style="left: 14%; animation-delay: 2s; animation-duration: 14s;">💜</span>
+        <span class="heart" style="left: 24%; animation-delay: 4s; animation-duration: 11s;">💜</span>
+        <span class="heart" style="left: 34%; animation-delay: 1s; animation-duration: 13s;">💜</span>
+        <span class="heart" style="left: 44%; animation-delay: 3s; animation-duration: 15s;">💜</span>
+        <span class="heart" style="left: 54%; animation-delay: 5s; animation-duration: 12s;">💜</span>
+        <span class="heart" style="left: 64%; animation-delay: 2s; animation-duration: 14s;">💜</span>
+        <span class="heart" style="left: 72%; animation-delay: 6s; animation-duration: 13s;">💜</span>
+        <span class="heart" style="left: 80%; animation-delay: 3s; animation-duration: 12s;">💜</span>
+        <span class="heart" style="left: 88%; animation-delay: 5s; animation-duration: 15s;">💜</span>
+        <span class="heart" style="left: 92%; animation-delay: 1s; animation-duration: 11s;">💜</span>
+        <span class="heart" style="left: 97%; animation-delay: 7s; animation-duration: 16s;">💜</span>
+    </div>
     <div id="uiRoot">
         <button id="globalBack" class="back-button" data-back="menu">
             <img src="assets/UI/BackButton.png" alt="Back">
         </button>
         <div id="menuScreen" class="screen active">
-            <div id="menuTitleWrap">
-                <img id="menuTitle" src="assets/UI/Title.png" alt="Title" style="width: 660px; margin-bottom: 0;">
+            <div id="menuScaleWrap">
+                <div id="menuContent">
+                    <div id="menuTitleWrap">
+                        <img id="menuTitle" src="assets/UI/Title.png" alt="Title" style="width: 660px; margin-bottom: 0;">
+                    </div>
+                    <img id="menuBanner" src="assets/UI/character-banner.png" alt="Character Banner">
+                    <button id="btnArcade" class="menu-button">
+                        <img src="assets/UI/ArcadeMode.png" alt="Arcade Mode">
+                    </button>
+                    <button id="btnSkirmish" class="menu-button">
+                        <img src="assets/UI/Skrimish.png" alt="Skirmish">
+                    </button>
+                    <button id="btnOptions" class="menu-button">
+                        <img src="assets/UI/Options.png" alt="Options">
+                    </button>
+                </div>
             </div>
-            <img id="menuBanner" src="assets/UI/character-banner.png" alt="Character Banner">
-            <button id="btnArcade" class="menu-button">
-                <img src="assets/UI/ArcadeMode.png" alt="Arcade Mode">
-            </button>
-            <button id="btnSkirmish" class="menu-button">
-                <img src="assets/UI/Skrimish.png" alt="Skirmish">
-            </button>
-            <button id="btnOptions" class="menu-button">
-                <img src="assets/UI/Options.png" alt="Options">
-            </button>
         </div>
 
         <div id="arcadeSelectScreen" class="screen">
             <button class="back-button" data-back="menu">
                 <img src="assets/UI/BackButton.png" alt="Back">
             </button>
-            <div class="screen-title">CHOOSE YOUR AMELIA</div>
-            <div class="select-row">
-                <button class="select-button" data-player="amelia1">
-                    <img src="assets/Characters/CS_Amelia_1.png" alt="Amelia 1">
-                </button>
-                <button class="select-button" data-player="amelia2">
-                    <img src="assets/Characters/CS_Amelia_2.png" alt="Amelia 2">
-                </button>
-                <button class="select-button" data-player="amelia3">
-                    <img src="assets/Characters/CS_Amelia_3.png" alt="Amelia 3">
-                </button>
-            </div>
-            <div class="select-card difficulty-card">
-                <div>DIFFICULTY</div>
-                <div class="select-row">
-                    <button class="select-button" data-difficulty="easy">
-                        <img src="assets/UI/EasyButton.png" alt="Easy">
-                    </button>
-                    <button class="select-button selected" data-difficulty="medium">
-                        <img src="assets/UI/MediumButton.png" alt="Medium">
-                    </button>
-                    <button class="select-button" data-difficulty="hard">
-                        <img src="assets/UI/HardButton.png" alt="Hard">
-                    </button>
-                </div>
-            </div>
-            <div class="section-divider"></div>
-            <button id="btnArcadeSelectContinue" class="menu-button">
-                <img src="assets/UI/ContinueButton2.png" alt="Continue">
-            </button>
-        </div>
-
-        <div id="skirmishScreen" class="screen">
-            <button class="back-button" data-back="menu">
-                <img src="assets/UI/BackButton.png" alt="Back">
-            </button>
-            <div class="screen-title">SKIRMISH</div>
-            <div class="select-row">
-                <div class="select-card player-card">
-                    <div>PLAYER</div>
+            <div id="arcadeSelectScaleWrap" class="scale-wrap">
+                <div id="arcadeSelectContent" class="scale-content">
+                    <div class="screen-title">CHOOSE YOUR AMELIA</div>
+                    <div class="mode-description">Three fights stand between you and victory! Defeat Starmer in the final match to reclaim Britain.</div>
                     <div class="select-row">
-                        <button class="select-button selected" data-player="amelia1">
+                        <button class="select-button" data-player="amelia1">
                             <img src="assets/Characters/CS_Amelia_1.png" alt="Amelia 1">
                         </button>
                         <button class="select-button" data-player="amelia2">
@@ -626,54 +872,127 @@
                             <img src="assets/Characters/CS_Amelia_3.png" alt="Amelia 3">
                         </button>
                     </div>
-                </div>
-                <div class="select-card enemy-card">
-                    <div>ENEMY</div>
-                    <div class="select-row">
-                        <button class="select-button selected" data-enemy="sand">
-                            <img src="assets/Characters/CS_Sand.png" alt="Sand">
-                        </button>
-                        <button class="select-button" data-enemy="meme">
-                            <img src="assets/Characters/CS_Meme_Police.png" alt="Meme Police">
-                        </button>
-                        <button class="select-button" data-enemy="starmer">
-                            <img src="assets/Characters/CS_Starmer.png" alt="Starmer">
-                        </button>
+                    <div class="select-card difficulty-card">
+                        <div>DIFFICULTY</div>
+                        <div class="select-row">
+                            <button class="select-button" data-difficulty="easy">
+                                <img src="assets/UI/EasyButton.png" alt="Easy">
+                            </button>
+                            <button class="select-button selected" data-difficulty="medium">
+                                <img src="assets/UI/MediumButton.png" alt="Medium">
+                            </button>
+                            <button class="select-button" data-difficulty="hard">
+                                <img src="assets/UI/HardButton.png" alt="Hard">
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div class="select-card scene-card">
-                    <div>SCENE</div>
-                    <div class="select-row">
-                        <button class="select-button" data-scene="scene1">
-                            <img src="assets/Scenes/scene-1-button.png" alt="Scene 1">
-                        </button>
-                        <button class="select-button" data-scene="scene2">
-                            <img src="assets/Scenes/scene-2-button.png" alt="Scene 2">
-                        </button>
-                        <button class="select-button" data-scene="scene3">
-                            <img src="assets/Scenes/scene-3-button.png" alt="Scene 3">
-                        </button>
-                    </div>
-                </div>
-                <div class="select-card difficulty-card">
-                    <div>DIFFICULTY</div>
-                    <div class="select-row">
-                        <button class="select-button" data-difficulty="easy">
-                            <img src="assets/UI/EasyButton.png" alt="Easy">
-                        </button>
-                        <button class="select-button selected" data-difficulty="medium">
-                            <img src="assets/UI/MediumButton.png" alt="Medium">
-                        </button>
-                        <button class="select-button" data-difficulty="hard">
-                            <img src="assets/UI/HardButton.png" alt="Hard">
-                        </button>
-                    </div>
+                    <div class="section-divider"></div>
+                    <button id="btnArcadeSelectContinue" class="menu-button">
+                        <img src="assets/UI/ContinueButton2.png" alt="Continue">
+                    </button>
                 </div>
             </div>
-            <div class="section-divider"></div>
-            <button id="btnSkirmishStart" class="menu-button">
-                <img src="assets/UI/ContinueButton2.png" alt="Continue">
+        </div>
+
+        <div id="arcadeTipsScreen" class="screen">
+            <button class="back-button" data-back="menu">
+                <img src="assets/UI/BackButton.png" alt="Back">
             </button>
+            <div id="arcadeTipsScaleWrap" class="scale-wrap">
+                <div id="arcadeTipsContent" class="scale-content">
+                    <img class="tips-image" src="assets/UI/controls.png" alt="Controls">
+                    <button id="btnArcadeTipsContinue" class="menu-button">
+                        <img src="assets/UI/ContinueButton2.png" alt="Continue">
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="skirmishScreen" class="screen">
+            <button class="back-button" data-back="menu">
+                <img src="assets/UI/BackButton.png" alt="Back">
+            </button>
+            <div id="skirmishScaleWrap" class="scale-wrap">
+                <div id="skirmishContent" class="scale-content">
+                    <div class="screen-title">SKIRMISH</div>
+                    <div class="select-row">
+                        <div class="select-card player-card">
+                            <div>PLAYER</div>
+                            <div class="select-row">
+                                <button class="select-button selected" data-player="amelia1">
+                                    <img src="assets/Characters/CS_Amelia_1.png" alt="Amelia 1">
+                                </button>
+                                <button class="select-button" data-player="amelia2">
+                                    <img src="assets/Characters/CS_Amelia_2.png" alt="Amelia 2">
+                                </button>
+                                <button class="select-button" data-player="amelia3">
+                                    <img src="assets/Characters/CS_Amelia_3.png" alt="Amelia 3">
+                                </button>
+                            </div>
+                        </div>
+                        <div class="select-card enemy-card">
+                            <div>ENEMY</div>
+                            <div class="select-row">
+                                <button class="select-button selected" data-enemy="sand">
+                                    <img src="assets/Characters/CS_Sand.png" alt="Sand">
+                                </button>
+                                <button class="select-button" data-enemy="meme">
+                                    <img src="assets/Characters/CS_Meme_Police.png" alt="Meme Police">
+                                </button>
+                                <button class="select-button" data-enemy="starmer">
+                                    <img src="assets/Characters/CS_Starmer.png" alt="Starmer">
+                                </button>
+                            </div>
+                        </div>
+                        <div class="select-card scene-card">
+                            <div>SCENE</div>
+                            <div class="select-row">
+                                <button class="select-button" data-scene="scene1">
+                                    <img src="assets/Scenes/scene-1-button.png" alt="Scene 1">
+                                </button>
+                                <button class="select-button" data-scene="scene2">
+                                    <img src="assets/Scenes/scene-2-button.png" alt="Scene 2">
+                                </button>
+                                <button class="select-button" data-scene="scene3">
+                                    <img src="assets/Scenes/scene-3-button.png" alt="Scene 3">
+                                </button>
+                            </div>
+                        </div>
+                        <div class="select-card difficulty-card">
+                            <div>DIFFICULTY</div>
+                            <div class="select-row">
+                                <button class="select-button" data-difficulty="easy">
+                                    <img src="assets/UI/EasyButton.png" alt="Easy">
+                                </button>
+                                <button class="select-button selected" data-difficulty="medium">
+                                    <img src="assets/UI/MediumButton.png" alt="Medium">
+                                </button>
+                                <button class="select-button" data-difficulty="hard">
+                                    <img src="assets/UI/HardButton.png" alt="Hard">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-divider"></div>
+                    <button id="btnSkirmishStart" class="menu-button">
+                        <img src="assets/UI/ContinueButton2.png" alt="Continue">
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="skirmishTipsScreen" class="screen">
+            <button class="back-button" data-back="menu">
+                <img src="assets/UI/BackButton.png" alt="Back">
+            </button>
+            <div id="skirmishTipsScaleWrap" class="scale-wrap">
+                <div id="skirmishTipsContent" class="scale-content">
+                    <img class="tips-image" src="assets/UI/controls.png" alt="Controls">
+                    <button id="btnSkirmishTipsContinue" class="menu-button">
+                        <img src="assets/UI/ContinueButton2.png" alt="Continue">
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div id="arcadeTransitionScreen" class="screen">
@@ -701,6 +1020,9 @@
             <button id="btnArcadeEndContinue" class="menu-button">
                 <img src="assets/UI/ContinueButton2.png" alt="Continue">
             </button>
+            <a class="link-button" href="https://ameliajak.com/" target="_blank" rel="noopener">
+                <img src="assets/UI/SupportButton.png" alt="Support">
+            </a>
         </div>
 
         <div id="skirmishEndScreen" class="screen">
@@ -713,6 +1035,9 @@
             <button id="btnSkirmishContinue" class="menu-button">
                 <img src="assets/UI/ContinueButton2.png" alt="Continue">
             </button>
+            <a class="link-button" href="https://ameliajak.com/" target="_blank" rel="noopener">
+                <img src="assets/UI/SupportButton.png" alt="Support">
+            </a>
         </div>
 
         <div id="optionsScreen" class="screen">
@@ -773,6 +1098,26 @@
                             <img id="volumeKnob" src="assets/UI/slider-knob.png" alt="Volume Knob">
                         </div>
                     </div>
+                    <div class="settings-section">
+                        <div class="settings-title">BACKGROUND</div>
+                        <div class="bg-options">
+                            <button class="bg-option" data-bg="default">
+                                <div class="bg-swatch default"></div>
+                                OG
+                            </button>
+                            <button class="bg-option" data-bg="purple">
+                                <div class="bg-swatch purple"></div>
+                                PURPLE
+                            </button>
+                            <button class="bg-option" data-bg="hearts">
+                                <div class="bg-swatch hearts"></div>
+                                HEARTS
+                            </button>
+                        </div>
+                    </div>
+                    <a class="link-button about-button" href="https://ameliajak.com/" target="_blank" rel="noopener">
+                        <img src="assets/UI/AboutButton.png" alt="About">
+                    </a>
                 </div>
             </div>
             <div id="cornerButtons">
@@ -901,19 +1246,19 @@
         new Audio(encodeURI(BASE ? `${BASE}/${p}` : p));
 
         const musicTracks = {
-            menu:   audio('assets/music/Pixel Red Banner.mp3'),
-            select: audio('assets/music/Select Amelia.mp3'),
-            scene1: audio('assets/music/Barroom Brawl Bitcrush.mp3'),
-            scene2: audio('assets/music/Pixel Flags in the Thunder.mp3'),
-            scene3: audio('assets/music/Steel and Static.mp3'),
-            win:    audio('assets/music/March of Pixel Hearts.mp3'),
-            lossA:  audio('assets/music/Britain Is Lost.mp3'),
-            lossB:  audio('assets/music/Purple Drain.mp3')
+            menu:   audio('assets/Music/Pixel Red Banner.mp3'),
+            select: audio('assets/Music/Select Amelia.mp3'),
+            scene1: audio('assets/Music/Barroom Brawl Bitcrush.mp3'),
+            scene2: audio('assets/Music/Pixel Flags in the Thunder.mp3'),
+            scene3: audio('assets/Music/Steel and Static.mp3'),
+            win:    audio('assets/Music/March of Pixel Hearts.mp3'),
+            lossA:  audio('assets/Music/Britain Is Lost.mp3'),
+            lossB:  audio('assets/Music/Purple Drain.mp3')
         };
 
         let activeTrack = null;
         let audioUnlocked = false;
-        let masterVolume = 0.45;
+        let masterVolume = 0.25;
         Object.values(musicTracks).forEach((track) => {
             track.loop = true;
             track.volume = masterVolume;
@@ -2296,7 +2641,9 @@
         const screens = {
             menu: document.getElementById('menuScreen'),
             arcadeSelect: document.getElementById('arcadeSelectScreen'),
+            arcadeTips: document.getElementById('arcadeTipsScreen'),
             skirmish: document.getElementById('skirmishScreen'),
+            skirmishTips: document.getElementById('skirmishTipsScreen'),
             options: document.getElementById('optionsScreen'),
             arcadeTransition: document.getElementById('arcadeTransitionScreen'),
             arcadeEnd: document.getElementById('arcadeEndScreen'),
@@ -2313,6 +2660,21 @@
         const arcadeTransitionText = document.getElementById('arcadeTransitionText');
         const skirmishOutcomeText = document.getElementById('skirmishOutcomeText');
         const skirmishWinnerHeadshot = document.getElementById('skirmishWinnerHeadshot');
+        const menuScreen = document.getElementById('menuScreen');
+        const menuScaleWrap = document.getElementById('menuScaleWrap');
+        const menuContent = document.getElementById('menuContent');
+        const arcadeSelectScreen = document.getElementById('arcadeSelectScreen');
+        const arcadeSelectScaleWrap = document.getElementById('arcadeSelectScaleWrap');
+        const arcadeSelectContent = document.getElementById('arcadeSelectContent');
+        const arcadeTipsScreen = document.getElementById('arcadeTipsScreen');
+        const arcadeTipsScaleWrap = document.getElementById('arcadeTipsScaleWrap');
+        const arcadeTipsContent = document.getElementById('arcadeTipsContent');
+        const skirmishScreen = document.getElementById('skirmishScreen');
+        const skirmishScaleWrap = document.getElementById('skirmishScaleWrap');
+        const skirmishContent = document.getElementById('skirmishContent');
+        const skirmishTipsScreen = document.getElementById('skirmishTipsScreen');
+        const skirmishTipsScaleWrap = document.getElementById('skirmishTipsScaleWrap');
+        const skirmishTipsContent = document.getElementById('skirmishTipsContent');
 
         let controlsVisible = false;
         let debugVisible = false;
@@ -2372,7 +2734,7 @@
             let nextKey = 'menu';
             if (currentScreen === 'menu' || currentScreen === 'options') {
                 nextKey = 'menu';
-            } else if (currentScreen === 'arcadeSelect' || currentScreen === 'skirmish') {
+            } else if (currentScreen === 'arcadeSelect' || currentScreen === 'arcadeTips' || currentScreen === 'skirmish' || currentScreen === 'skirmishTips') {
                 nextKey = 'select';
             } else if (currentScreen === 'arcadeTransition' || currentScreen === 'game') {
                 nextKey = currentSceneId;
@@ -2387,6 +2749,37 @@
             debugEl.style.display = debugVisible ? 'block' : 'none';
         };
         updateOverlayVisibility();
+
+        const BACKGROUND_KEY = 'amelia_background_theme';
+        const backgroundButtons = document.querySelectorAll('[data-bg]');
+
+        const applyBackgroundTheme = (theme) => {
+            document.body.classList.remove('bg-purple', 'bg-hearts');
+            if (theme === 'purple') {
+                document.body.classList.add('bg-purple');
+            } else if (theme === 'hearts') {
+                document.body.classList.add('bg-hearts');
+            }
+            backgroundButtons.forEach((btn) => {
+                btn.classList.toggle('active', btn.dataset.bg === theme);
+            });
+            try {
+                localStorage.setItem(BACKGROUND_KEY, theme);
+            } catch (err) {
+                // Ignore storage errors (private mode, etc.)
+            }
+        };
+
+        const loadBackgroundTheme = () => {
+            let saved = 'hearts';
+            try {
+                saved = localStorage.getItem(BACKGROUND_KEY) || 'hearts';
+            } catch (err) {
+                saved = 'hearts';
+            }
+            applyBackgroundTheme(saved);
+        };
+        loadBackgroundTheme();
 
         const closeCornerPopups = () => {
             helpButton?.classList.remove('active');
@@ -2411,8 +2804,83 @@
             closeCornerPopups();
             if (name === 'menu') {
                 gameMode = 'menu';
+                fitMenuToViewport();
+            }
+            if (name === 'arcadeSelect') {
+                fitScreenToViewport(arcadeSelectScreen, arcadeSelectScaleWrap, arcadeSelectContent);
+            }
+            if (name === 'arcadeTips') {
+                fitScreenToViewport(arcadeTipsScreen, arcadeTipsScaleWrap, arcadeTipsContent);
+            }
+            if (name === 'skirmish') {
+                fitScreenToViewport(skirmishScreen, skirmishScaleWrap, skirmishContent);
+            }
+            if (name === 'skirmishTips') {
+                fitScreenToViewport(skirmishTipsScreen, skirmishTipsScaleWrap, skirmishTipsContent);
             }
         };
+
+        const fitScreenToViewport = (screen, wrap, content) => {
+            if (!screen || !wrap || !content) return;
+            content.style.transform = 'scale(1)';
+            wrap.style.width = 'auto';
+            wrap.style.height = 'auto';
+
+            const screenStyles = window.getComputedStyle(screen);
+            const paddingTop = parseFloat(screenStyles.paddingTop) || 0;
+            const paddingBottom = parseFloat(screenStyles.paddingBottom) || 0;
+            const availableHeight = Math.max(0, screen.clientHeight - paddingTop - paddingBottom - 8);
+            const availableWidth = Math.max(0, screen.clientWidth - 24);
+            const rect = content.getBoundingClientRect();
+            if (!rect.height || !rect.width) return;
+            const scale = Math.min(1, availableHeight / rect.height, availableWidth / rect.width);
+            content.style.transform = `scale(${scale})`;
+            wrap.style.width = `${rect.width * scale}px`;
+            wrap.style.height = `${rect.height * scale}px`;
+        };
+
+        const fitMenuToViewport = () => {
+            if (!menuScreen || !menuScaleWrap || !menuContent) return;
+            menuContent.style.transform = 'scale(1)';
+            menuScaleWrap.style.width = 'auto';
+            menuScaleWrap.style.height = 'auto';
+
+            const menuStyles = window.getComputedStyle(menuScreen);
+            const paddingTop = parseFloat(menuStyles.paddingTop) || 0;
+            const paddingBottom = parseFloat(menuStyles.paddingBottom) || 0;
+            const availableHeight = Math.max(0, menuScreen.clientHeight - paddingTop - paddingBottom - 8);
+            const availableWidth = Math.max(0, menuScreen.clientWidth - 24);
+            const rect = menuContent.getBoundingClientRect();
+            if (!rect.height || !rect.width) return;
+            const scale = Math.min(1, availableHeight / rect.height, availableWidth / rect.width);
+            menuContent.style.transform = `scale(${scale})`;
+            menuScaleWrap.style.width = `${rect.width * scale}px`;
+            menuScaleWrap.style.height = `${rect.height * scale}px`;
+        };
+        window.addEventListener('resize', fitMenuToViewport);
+        window.addEventListener('resize', () => {
+            fitScreenToViewport(arcadeSelectScreen, arcadeSelectScaleWrap, arcadeSelectContent);
+            fitScreenToViewport(arcadeTipsScreen, arcadeTipsScaleWrap, arcadeTipsContent);
+            fitScreenToViewport(skirmishScreen, skirmishScaleWrap, skirmishContent);
+            fitScreenToViewport(skirmishTipsScreen, skirmishTipsScaleWrap, skirmishTipsContent);
+        });
+
+        const setupScaleObservers = () => {
+            if (!window.ResizeObserver) return;
+            const observe = (screen, wrap, content) => {
+                if (!content) return;
+                const observer = new ResizeObserver(() => {
+                    fitScreenToViewport(screen, wrap, content);
+                });
+                observer.observe(content);
+            };
+            observe(arcadeSelectScreen, arcadeSelectScaleWrap, arcadeSelectContent);
+            observe(arcadeTipsScreen, arcadeTipsScaleWrap, arcadeTipsContent);
+            observe(skirmishScreen, skirmishScaleWrap, skirmishContent);
+            observe(skirmishTipsScreen, skirmishTipsScaleWrap, skirmishTipsContent);
+            observe(menuScreen, menuScaleWrap, menuContent);
+        };
+        setupScaleObservers();
 
         const configureMatch = ({ playerId, enemyId, sceneId }) => {
             currentPlayerId = playerId;
@@ -2564,13 +3032,9 @@
         };
         
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'h' || e.key === 'H') {
-                controlsVisible = !controlsVisible;
-                updateOverlayVisibility();
-            }
-            if (e.key === 'd' || e.key === 'D') {
-                debugVisible = !debugVisible;
-                updateOverlayVisibility();
+            if (e.key === 'h' || e.key === 'H' || e.key === 'd' || e.key === 'D') {
+                e.preventDefault();
+                return;
             }
             keys[e.key] = true;
             e.preventDefault();
@@ -2578,6 +3042,20 @@
         
         window.addEventListener('keyup', (e) => {
             keys[e.key] = false;
+        });
+
+        document.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+        });
+
+        document.addEventListener('dragstart', (event) => {
+            event.preventDefault();
+        });
+
+        backgroundButtons.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                applyBackgroundTheme(btn.dataset.bg);
+            });
         });
 
         document.getElementById('btnArcade').addEventListener('click', () => setScreen('arcadeSelect'));
@@ -2613,6 +3091,9 @@
         });
         document.getElementById('btnArcadeSelectContinue').addEventListener('click', () => {
             currentDifficulty = arcadeDifficulty;
+            setScreen('arcadeTips');
+        });
+        document.getElementById('btnArcadeTipsContinue').addEventListener('click', () => {
             startArcade(arcadeSelection);
         });
 
@@ -2650,7 +3131,8 @@
                 btn.classList.add('selected');
             });
         });
-        document.getElementById('btnSkirmishStart').addEventListener('click', startSkirmish);
+        document.getElementById('btnSkirmishStart').addEventListener('click', () => setScreen('skirmishTips'));
+        document.getElementById('btnSkirmishTipsContinue').addEventListener('click', startSkirmish);
 
         const helpButton = document.getElementById('helpButton');
         const helpPopup = document.getElementById('helpPopup');
@@ -2738,6 +3220,12 @@
         volumeSlider.addEventListener('pointercancel', () => {
             volumeDragging = false;
         });
+        volumeSlider.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            const delta = Math.sign(event.deltaY);
+            const step = 0.05;
+            setVolume(masterVolume - delta * step);
+        }, { passive: false });
 
         const unlockAudio = () => {
             if (audioUnlocked) return;
