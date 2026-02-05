@@ -76,8 +76,8 @@
 
         #gameWrapper {
             position: relative;
-            width: fit-content;
-            height: fit-content;
+            width: 1200px;
+            height: 600px;
         }
 
         #uiRoot {
@@ -1936,6 +1936,7 @@
 
             draw() {
                 // Shadow
+                if (!MOBILE_PERF) {
                 const groundY = GROUND_Y + this.height * 0.72;
                 const maxJump = 220;
                 const airOffset = Math.min(maxJump, Math.max(0, GROUND_Y - this.y));
@@ -1955,6 +1956,7 @@
                 ctx.ellipse(this.x + this.width / 2, groundY + 32, shadowWidth, shadowHeight, 0, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
+                }
 
                 const anim = animations[this.currentAnimation];
                 const frameNumber = anim.frames[this.frameIndex];
@@ -2910,6 +2912,7 @@
             const uaMatch = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
             return coarse || touchPoints || uaMatch;
         };
+        const MOBILE_PERF = isMobileDevice();
 
         const updateMobileControlsVisibility = () => {
             const show = document.body.classList.contains('in-game') && isMobileDevice();
@@ -2932,14 +2935,15 @@
             const baseWidth = canvas.width;
             const baseHeight = canvas.height;
             const margin = 12;
-
-            const availableWidth = Math.max(0, window.innerWidth - margin * 2);
+            const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+            const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            const availableWidth = Math.max(0, viewportWidth - margin * 2);
             const scaleByWidth = Math.min(1, availableWidth / baseWidth);
 
             const heightThreshold = baseHeight * 1.5;
             let scaleByHeight = 1;
-            if (window.innerHeight < heightThreshold) {
-                const availableHeight = Math.max(0, window.innerHeight - margin * 2);
+            if (viewportHeight < heightThreshold) {
+                const availableHeight = Math.max(0, viewportHeight - margin * 2);
                 scaleByHeight = availableHeight / baseHeight;
             }
 
@@ -3085,6 +3089,10 @@
             updateCornerControlsVisibility();
             updateMobileControlsVisibility();
         });
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', fitGameToViewport);
+            window.visualViewport.addEventListener('scroll', fitGameToViewport);
+        }
 
         const setupScaleObservers = () => {
             if (!window.ResizeObserver) return;
@@ -3689,6 +3697,9 @@
                     debris.splice(index, 1);
                 }
             });
+            if (MOBILE_PERF && debris.length > 40) {
+                debris.splice(0, debris.length - 40);
+            }
 
             // Draw everything
             objects.forEach(obj => obj.draw());
@@ -3700,18 +3711,20 @@
             drawHud();
 
             // Debug info
-            const debugInfo = document.getElementById('debug');
-            debugInfo.innerHTML = `
-                Animation: ${player.currentAnimation}<br>
-                Frame: ${player.frameIndex}<br>
-                Position: ${Math.floor(player.x)}, ${Math.floor(player.y)}<br>
-                Velocity: ${player.velocityX.toFixed(1)}, ${player.velocityY.toFixed(1)}<br>
-                Grounded: ${player.isGrounded}<br>
-                Locked: ${player.animationLocked}<br>
-                Hitboxes: ${player.hitboxes.length}<br>
-                Projectiles: ${projectiles.length}<br>
-                Flying Kick CD: ${player.flyingKickCooldown}
-            `;
+            if (debugVisible) {
+                const debugInfo = document.getElementById('debug');
+                debugInfo.innerHTML = `
+                    Animation: ${player.currentAnimation}<br>
+                    Frame: ${player.frameIndex}<br>
+                    Position: ${Math.floor(player.x)}, ${Math.floor(player.y)}<br>
+                    Velocity: ${player.velocityX.toFixed(1)}, ${player.velocityY.toFixed(1)}<br>
+                    Grounded: ${player.isGrounded}<br>
+                    Locked: ${player.animationLocked}<br>
+                    Hitboxes: ${player.hitboxes.length}<br>
+                    Projectiles: ${projectiles.length}<br>
+                    Flying Kick CD: ${player.flyingKickCooldown}
+                `;
+            }
 
             if (!matchOver && roundActive) {
                 if (player.health <= 0 || enemy.health <= 0) {
