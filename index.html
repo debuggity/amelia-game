@@ -510,6 +510,127 @@
             z-index: 12;
         }
 
+        @media (pointer: coarse) {
+            body.in-game #cornerControls,
+            body.in-tips #cornerControls {
+                display: none;
+            }
+        }
+
+        #mobileControls {
+            position: fixed;
+            inset: 0;
+            display: none;
+            pointer-events: none;
+            z-index: 9;
+        }
+
+        body.in-game.mobile-controls #mobileControls {
+            display: block;
+        }
+
+        #mobileControls .control-pad,
+        #mobileControls .attack-pad {
+            position: absolute;
+            pointer-events: auto;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #mobileControls .control-pad {
+            width: 180px;
+            height: 180px;
+            left: 36px;
+            bottom: 36px;
+        }
+
+        #mobileControls .pad-base {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.35));
+            box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.45), 0 8px 18px rgba(0, 0, 0, 0.35);
+        }
+
+        #mobileControls .pad-stick {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.65), rgba(80, 20, 120, 0.9));
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+        }
+
+        #mobileControls .attack-pad {
+            right: 36px;
+            bottom: 36px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+            width: 190px;
+            height: 190px;
+        }
+
+        #mobileControls .attack-button {
+            border: none;
+            background: transparent;
+            padding: 0;
+            cursor: pointer;
+            transition: transform 0.12s ease, filter 0.12s ease;
+        }
+
+        #mobileControls .attack-button img {
+            width: 90px;
+            height: auto;
+            display: block;
+        }
+
+        #mobileControls .attack-button:active {
+            transform: scale(0.95);
+            filter: brightness(1.08);
+        }
+
+        @media (max-width: 980px) and (orientation: landscape), (max-height: 520px) {
+            #mobileControls .control-pad {
+                width: 150px;
+                height: 150px;
+                left: 28px;
+                bottom: 28px;
+            }
+
+            #mobileControls .attack-pad {
+                width: 160px;
+                height: 160px;
+                right: 28px;
+                bottom: 28px;
+                gap: 8px;
+            }
+
+            #mobileControls .attack-button img {
+                width: 76px;
+            }
+        }
+
+        @media (max-width: 720px) and (orientation: portrait) {
+            #mobileControls .control-pad {
+                width: 160px;
+                height: 160px;
+                left: 26px;
+                bottom: 26px;
+            }
+
+            #mobileControls .attack-pad {
+                width: 170px;
+                height: 170px;
+                right: 26px;
+                bottom: 26px;
+            }
+        }
+
         #helpContainer {
             position: relative;
         }
@@ -1134,6 +1255,27 @@
                     <img src="assets/UI/small-help.png" alt="Help">
                 </button>
             </div>
+        </div>
+    </div>
+
+    <div id="mobileControls" aria-hidden="true">
+        <div class="control-pad" id="movePad">
+            <div class="pad-base"></div>
+            <div class="pad-stick" id="moveStick"></div>
+        </div>
+        <div class="attack-pad" id="attackPad">
+            <button class="attack-button" data-key="q" aria-label="Hadoken">
+                <img src="assets/UI/hadokenQ.png" alt="Hadoken">
+            </button>
+            <button class="attack-button" data-key="a" aria-label="Punch">
+                <img src="assets/UI/punchA.png" alt="Punch">
+            </button>
+            <button class="attack-button" data-key="z" aria-label="Flying Kick">
+                <img src="assets/UI/flyingZ.png" alt="Flying Kick">
+            </button>
+            <button class="attack-button" data-key="s" aria-label="Kick">
+                <img src="assets/UI/kickS.png" alt="Kick">
+            </button>
         </div>
     </div>
 
@@ -2644,6 +2786,10 @@
         const controlsEl = document.getElementById('controls');
         const debugEl = document.getElementById('debug');
         const gameWrapper = document.getElementById('gameWrapper');
+        const mobileControls = document.getElementById('mobileControls');
+        const movePad = document.getElementById('movePad');
+        const moveStick = document.getElementById('moveStick');
+        const attackPad = document.getElementById('attackPad');
         const cornerControls = document.getElementById('cornerControls');
         const screens = {
             menu: document.getElementById('menuScreen'),
@@ -2757,6 +2903,30 @@
         };
         updateOverlayVisibility();
 
+        const isMobileDevice = () => {
+            const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+            const touchPoints = navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
+            const ua = navigator.userAgent || '';
+            const uaMatch = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+            return coarse || touchPoints || uaMatch;
+        };
+
+        const updateMobileControlsVisibility = () => {
+            const show = document.body.classList.contains('in-game') && isMobileDevice();
+            document.body.classList.toggle('mobile-controls', show);
+            if (mobileControls) {
+                mobileControls.style.display = show ? 'block' : 'none';
+            }
+        };
+
+        const updateCornerControlsVisibility = () => {
+            if (!cornerControls) return;
+            const hideForMobile = (document.body.classList.contains('in-game') || document.body.classList.contains('in-tips')) && isMobileDevice();
+            cornerControls.style.display = hideForMobile ? 'none' : '';
+        };
+        updateCornerControlsVisibility();
+        updateMobileControlsVisibility();
+
         const fitGameToViewport = () => {
             if (!gameWrapper || gameWrapper.style.display === 'none') return;
             const baseWidth = canvas.width;
@@ -2776,6 +2946,15 @@
             const scale = Math.min(1, scaleByWidth, scaleByHeight);
             gameWrapper.style.transformOrigin = 'center center';
             gameWrapper.style.transform = `scale(${scale})`;
+        };
+
+        const resetMobileInputs = () => {
+            ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'q', 'a', 's', 'z', 'Q', 'A', 'S', 'Z'].forEach((key) => {
+                keys[key] = false;
+            });
+            if (moveStick) {
+                moveStick.style.transform = 'translate(-50%, -50%)';
+            }
         };
 
         const BACKGROUND_KEY = 'amelia_background_theme';
@@ -2824,9 +3003,14 @@
             const inGame = name === 'game';
             gameWrapper.style.display = inGame ? 'block' : 'none';
             globalBack.style.display = inGame ? 'block' : 'none';
+            document.body.classList.toggle('in-game', inGame);
+            const inTips = name === 'arcadeTips' || name === 'skirmishTips';
+            document.body.classList.toggle('in-tips', inTips);
             controlsVisible = inGame ? controlsVisible : false;
             debugVisible = inGame ? debugVisible : false;
             updateOverlayVisibility();
+            updateCornerControlsVisibility();
+            updateMobileControlsVisibility();
             currentScreen = name;
             updateMusic();
             closeCornerPopups();
@@ -2850,6 +3034,7 @@
                 requestAnimationFrame(fitGameToViewport);
             } else {
                 gameWrapper.style.transform = 'scale(1)';
+                resetMobileInputs();
             }
         };
 
@@ -2897,6 +3082,8 @@
             fitScreenToViewport(skirmishScreen, skirmishScaleWrap, skirmishContent);
             fitScreenToViewport(skirmishTipsScreen, skirmishTipsScaleWrap, skirmishTipsContent);
             fitGameToViewport();
+            updateCornerControlsVisibility();
+            updateMobileControlsVisibility();
         });
 
         const setupScaleObservers = () => {
@@ -3091,6 +3278,70 @@
                 applyBackgroundTheme(btn.dataset.bg);
             });
         });
+
+        let activePadPointer = null;
+        const padRadius = 70;
+
+        const updatePadFromEvent = (event) => {
+            const rect = movePad.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const dx = event.clientX - centerX;
+            const dy = event.clientY - centerY;
+            const distance = Math.min(padRadius, Math.hypot(dx, dy));
+            const angle = Math.atan2(dy, dx);
+            const x = Math.cos(angle) * distance;
+            const y = Math.sin(angle) * distance;
+            moveStick.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+
+            const threshold = padRadius * 0.35;
+            keys['ArrowLeft'] = x < -threshold;
+            keys['ArrowRight'] = x > threshold;
+            keys['ArrowUp'] = y < -threshold;
+            keys['ArrowDown'] = y > threshold;
+        };
+
+        if (movePad && moveStick) {
+            movePad.addEventListener('pointerdown', (event) => {
+                activePadPointer = event.pointerId;
+                movePad.setPointerCapture(event.pointerId);
+                updatePadFromEvent(event);
+            });
+            movePad.addEventListener('pointermove', (event) => {
+                if (event.pointerId !== activePadPointer) return;
+                updatePadFromEvent(event);
+            });
+            const endPad = (event) => {
+                if (event.pointerId !== activePadPointer) return;
+                movePad.releasePointerCapture(event.pointerId);
+                activePadPointer = null;
+                keys['ArrowLeft'] = false;
+                keys['ArrowRight'] = false;
+                keys['ArrowUp'] = false;
+                keys['ArrowDown'] = false;
+                moveStick.style.transform = 'translate(-50%, -50%)';
+            };
+            movePad.addEventListener('pointerup', endPad);
+            movePad.addEventListener('pointercancel', endPad);
+        }
+
+        if (attackPad) {
+            attackPad.querySelectorAll('.attack-button').forEach((btn) => {
+                const key = btn.dataset.key;
+                const down = (event) => {
+                    keys[key] = true;
+                    btn.setPointerCapture(event.pointerId);
+                };
+                const up = (event) => {
+                    keys[key] = false;
+                    btn.releasePointerCapture(event.pointerId);
+                };
+                btn.addEventListener('pointerdown', down);
+                btn.addEventListener('pointerup', up);
+                btn.addEventListener('pointercancel', up);
+                btn.addEventListener('pointerleave', up);
+            });
+        }
 
         document.getElementById('btnArcade').addEventListener('click', () => setScreen('arcadeSelect'));
         document.getElementById('btnSkirmish').addEventListener('click', () => setScreen('skirmish'));

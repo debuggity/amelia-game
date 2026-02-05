@@ -213,6 +213,12 @@
             width: 110px;
         }
 
+        @media (max-width: 720px), (max-height: 520px) {
+            .back-button img {
+                width: 56px;
+            }
+        }
+
         #globalBack {
             position: fixed;
             top: 32px;
@@ -1258,7 +1264,7 @@
 
         let activeTrack = null;
         let audioUnlocked = false;
-        let masterVolume = 0.25;
+        let masterVolume = 0.20;
         Object.values(musicTracks).forEach((track) => {
             track.loop = true;
             track.volume = masterVolume;
@@ -2638,6 +2644,7 @@
         const controlsEl = document.getElementById('controls');
         const debugEl = document.getElementById('debug');
         const gameWrapper = document.getElementById('gameWrapper');
+        const cornerControls = document.getElementById('cornerControls');
         const screens = {
             menu: document.getElementById('menuScreen'),
             arcadeSelect: document.getElementById('arcadeSelectScreen'),
@@ -2750,6 +2757,27 @@
         };
         updateOverlayVisibility();
 
+        const fitGameToViewport = () => {
+            if (!gameWrapper || gameWrapper.style.display === 'none') return;
+            const baseWidth = canvas.width;
+            const baseHeight = canvas.height;
+            const margin = 12;
+
+            const availableWidth = Math.max(0, window.innerWidth - margin * 2);
+            const scaleByWidth = Math.min(1, availableWidth / baseWidth);
+
+            const heightThreshold = baseHeight * 1.5;
+            let scaleByHeight = 1;
+            if (window.innerHeight < heightThreshold) {
+                const availableHeight = Math.max(0, window.innerHeight - margin * 2);
+                scaleByHeight = availableHeight / baseHeight;
+            }
+
+            const scale = Math.min(1, scaleByWidth, scaleByHeight);
+            gameWrapper.style.transformOrigin = 'center center';
+            gameWrapper.style.transform = `scale(${scale})`;
+        };
+
         const BACKGROUND_KEY = 'amelia_background_theme';
         const backgroundButtons = document.querySelectorAll('[data-bg]');
 
@@ -2818,6 +2846,11 @@
             if (name === 'skirmishTips') {
                 fitScreenToViewport(skirmishTipsScreen, skirmishTipsScaleWrap, skirmishTipsContent);
             }
+            if (inGame) {
+                requestAnimationFrame(fitGameToViewport);
+            } else {
+                gameWrapper.style.transform = 'scale(1)';
+            }
         };
 
         const fitScreenToViewport = (screen, wrap, content) => {
@@ -2863,6 +2896,7 @@
             fitScreenToViewport(arcadeTipsScreen, arcadeTipsScaleWrap, arcadeTipsContent);
             fitScreenToViewport(skirmishScreen, skirmishScaleWrap, skirmishContent);
             fitScreenToViewport(skirmishTipsScreen, skirmishTipsScaleWrap, skirmishTipsContent);
+            fitGameToViewport();
         });
 
         const setupScaleObservers = () => {
