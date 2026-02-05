@@ -1429,7 +1429,12 @@
         location.hostname.endsWith('github.io') ? `/${REPO}` : '';
 
         const audio = (p) => {
-        const track = new Audio(encodeURI(BASE ? `${BASE}/${p}` : p));
+        const parts = p.split('/');
+        const fileName = parts.pop() || '';
+        const mobileName = `crapo_${fileName}`;
+        const finalName = MOBILE_PERF ? mobileName : fileName;
+        const finalPath = [...parts, finalName].join('/');
+        const track = new Audio(encodeURI(BASE ? `${BASE}/${finalPath}` : finalPath));
         if (MOBILE_PERF) {
             track.preload = 'none';
         }
@@ -2981,7 +2986,7 @@
         updateOverlayVisibility();
 
         const applyRenderScale = () => {
-            RENDER_SCALE = MOBILE_PERF ? 0.5 : 1;
+            RENDER_SCALE = MOBILE_PERF ? 0.4 : 1;
             canvas.width = Math.round(WORLD_WIDTH * RENDER_SCALE);
             canvas.height = Math.round(WORLD_HEIGHT * RENDER_SCALE);
             canvas.style.width = `${WORLD_WIDTH}px`;
