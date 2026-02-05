@@ -662,6 +662,14 @@
             display: block;
         }
 
+        body.mobile-device #helpButton {
+            display: none;
+        }
+
+        body.mobile-device #helpPopup {
+            display: none !important;
+        }
+
         #settingsButton.active,
         #helpButton.active {
             box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.8), 0 0 14px rgba(255, 215, 0, 0.45);
@@ -1327,6 +1335,9 @@
             return coarse || touchPoints || uaMatch;
         };
         const MOBILE_PERF = isMobileDevice();
+        if (MOBILE_PERF) {
+            document.body.classList.add('mobile-device');
+        }
 
         // Load images
         const images = {
@@ -2965,7 +2976,7 @@
         updateOverlayVisibility();
 
         const applyRenderScale = () => {
-            RENDER_SCALE = MOBILE_PERF ? 0.65 : 1;
+            RENDER_SCALE = MOBILE_PERF ? 0.5 : 1;
             canvas.width = Math.round(WORLD_WIDTH * RENDER_SCALE);
             canvas.height = Math.round(WORLD_HEIGHT * RENDER_SCALE);
             canvas.style.width = `${WORLD_WIDTH}px`;
@@ -3474,7 +3485,11 @@
         });
         document.getElementById('btnArcadeSelectContinue').addEventListener('click', () => {
             currentDifficulty = arcadeDifficulty;
-            setScreen('arcadeTips');
+            if (MOBILE_PERF) {
+                startArcade(arcadeSelection);
+            } else {
+                setScreen('arcadeTips');
+            }
         });
         document.getElementById('btnArcadeTipsContinue').addEventListener('click', () => {
             startArcade(arcadeSelection);
@@ -3514,7 +3529,13 @@
                 btn.classList.add('selected');
             });
         });
-        document.getElementById('btnSkirmishStart').addEventListener('click', () => setScreen('skirmishTips'));
+        document.getElementById('btnSkirmishStart').addEventListener('click', () => {
+            if (MOBILE_PERF) {
+                startSkirmish();
+            } else {
+                setScreen('skirmishTips');
+            }
+        });
         document.getElementById('btnSkirmishTipsContinue').addEventListener('click', startSkirmish);
 
         const helpButton = document.getElementById('helpButton');
