@@ -701,6 +701,13 @@
             height: auto;
         }
 
+        @media (max-width: 520px), (max-height: 700px) {
+            #settingsPopup {
+                transform: scale(0.7);
+                transform-origin: 100% 100%;
+            }
+        }
+
         #settingsPopupImage {
             width: 100%;
             height: auto;
@@ -1312,6 +1319,14 @@
         const SPRITE_WIDTH = 316;
         const SPRITE_HEIGHT = 345;
         const FRAMES_PER_ROW = 8;
+        const isMobileDevice = () => {
+            const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+            const touchPoints = navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
+            const ua = navigator.userAgent || '';
+            const uaMatch = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
+            return coarse || touchPoints || uaMatch;
+        };
+        const MOBILE_PERF = isMobileDevice();
 
         // Load images
         const images = {
@@ -1397,8 +1412,13 @@
         const BASE =
         location.hostname.endsWith('github.io') ? `/${REPO}` : '';
 
-        const audio = (p) =>
-        new Audio(encodeURI(BASE ? `${BASE}/${p}` : p));
+        const audio = (p) => {
+        const track = new Audio(encodeURI(BASE ? `${BASE}/${p}` : p));
+        if (MOBILE_PERF) {
+            track.preload = 'none';
+        }
+        return track;
+        };
 
         const musicTracks = {
             menu:   audio('assets/Music/Pixel Red Banner.mp3'),
@@ -1413,6 +1433,7 @@
 
         let activeTrack = null;
         let audioUnlocked = false;
+        let pausedByVisibility = false;
         let masterVolume = 0.20;
         Object.values(musicTracks).forEach((track) => {
             track.loop = true;
@@ -2588,13 +2609,6 @@
 
             draw() {
                 // Draw energy ball
-                if (MOBILE_PERF) {
-                    ctx.fillStyle = this.colorStops[1] || this.colorStops[0];
-                    ctx.beginPath();
-                    ctx.arc(this.x + this.width/2, this.y + this.height/2, this.width/2, 0, Math.PI * 2);
-                    ctx.fill();
-                    return;
-                }
                 const gradient = ctx.createRadialGradient(
                     this.x + this.width/2, this.y + this.height/2, 5,
                     this.x + this.width/2, this.y + this.height/2, this.width/2
@@ -2896,8 +2910,13 @@
             }
             activeTrack = next;
             activeTrack.volume = masterVolume;
+            if (document.hidden) {
+                pausedByVisibility = true;
+                return;
+            }
             if (audioUnlocked) {
                 activeTrack.play().catch(() => {});
+                pausedByVisibility = false;
             }
         };
 
@@ -2915,20 +2934,35 @@
             setMusic(nextKey);
         };
 
+        const pauseActiveTrack = () => {
+            if (!activeTrack || activeTrack.paused) return;
+            activeTrack.pause();
+            pausedByVisibility = true;
+        };
+
+        const resumeActiveTrack = () => {
+            if (!pausedByVisibility || !audioUnlocked || !activeTrack || document.hidden) return;
+            activeTrack.play().catch(() => {});
+            pausedByVisibility = false;
+        };
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                pauseActiveTrack();
+            } else {
+                resumeActiveTrack();
+            }
+        });
+        window.addEventListener('pagehide', pauseActiveTrack);
+        window.addEventListener('pageshow', resumeActiveTrack);
+        window.addEventListener('blur', pauseActiveTrack);
+        window.addEventListener('focus', resumeActiveTrack);
+
         const updateOverlayVisibility = () => {
             controlsEl.style.display = controlsVisible ? 'block' : 'none';
             debugEl.style.display = debugVisible ? 'block' : 'none';
         };
         updateOverlayVisibility();
-
-        const isMobileDevice = () => {
-            const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-            const touchPoints = navigator.maxTouchPoints && navigator.maxTouchPoints > 0;
-            const ua = navigator.userAgent || '';
-            const uaMatch = /Mobi|Android|iPhone|iPad|iPod/i.test(ua);
-            return coarse || touchPoints || uaMatch;
-        };
-        const MOBILE_PERF = isMobileDevice();
 
         const applyRenderScale = () => {
             RENDER_SCALE = MOBILE_PERF ? 0.65 : 1;
@@ -3019,11 +3053,11 @@
         };
 
         const loadBackgroundTheme = () => {
-            let saved = 'hearts';
+            let saved = MOBILE_PERF ? 'purple' : 'hearts';
             try {
-                saved = localStorage.getItem(BACKGROUND_KEY) || 'hearts';
+                saved = localStorage.getItem(BACKGROUND_KEY) || (MOBILE_PERF ? 'purple' : 'hearts');
             } catch (err) {
-                saved = 'hearts';
+                saved = MOBILE_PERF ? 'purple' : 'hearts';
             }
             applyBackgroundTheme(saved);
         };
