@@ -30,6 +30,11 @@
             -webkit-touch-callout: none;
         }
 
+        body.in-game.mobile-controls {
+            align-items: flex-start;
+            padding-top: calc(env(safe-area-inset-top, 0px) + 6px);
+        }
+
         body.bg-purple {
             --bg-main: linear-gradient(160deg, #3a0b5a 0%, #4b1175 45%, #26083f 100%);
         }
@@ -540,8 +545,8 @@
         #mobileControls .control-pad {
             width: 180px;
             height: 180px;
-            left: 36px;
-            bottom: 36px;
+            left: calc(env(safe-area-inset-left, 0px) + 18px);
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
         }
 
         #mobileControls .pad-base {
@@ -565,8 +570,8 @@
         }
 
         #mobileControls .attack-pad {
-            right: 36px;
-            bottom: 36px;
+            right: calc(env(safe-area-inset-right, 0px) + 18px);
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: repeat(2, 1fr);
@@ -598,15 +603,15 @@
             #mobileControls .control-pad {
                 width: 150px;
                 height: 150px;
-                left: 28px;
-                bottom: 28px;
+                left: calc(env(safe-area-inset-left, 0px) + 14px);
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
             }
 
             #mobileControls .attack-pad {
                 width: 160px;
                 height: 160px;
-                right: 28px;
-                bottom: 28px;
+                right: calc(env(safe-area-inset-right, 0px) + 14px);
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
                 gap: 8px;
             }
 
@@ -619,15 +624,15 @@
             #mobileControls .control-pad {
                 width: 160px;
                 height: 160px;
-                left: 26px;
-                bottom: 26px;
+                left: calc(env(safe-area-inset-left, 0px) + 12px);
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
             }
 
             #mobileControls .attack-pad {
                 width: 170px;
                 height: 170px;
-                right: 26px;
-                bottom: 26px;
+                right: calc(env(safe-area-inset-right, 0px) + 12px);
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
             }
         }
 
@@ -2583,6 +2588,13 @@
 
             draw() {
                 // Draw energy ball
+                if (MOBILE_PERF) {
+                    ctx.fillStyle = this.colorStops[1] || this.colorStops[0];
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width/2, this.y + this.height/2, this.width/2, 0, Math.PI * 2);
+                    ctx.fill();
+                    return;
+                }
                 const gradient = ctx.createRadialGradient(
                     this.x + this.width/2, this.y + this.height/2, 5,
                     this.x + this.width/2, this.y + this.height/2, this.width/2
@@ -2620,8 +2632,10 @@
                 this.hurtCooldown = 20;
                 if (this.health <= 0) {
                     // Create debris effect
-                    for (let i = 0; i < 8; i++) {
-                        debris.push(new Debris(this.x + this.width/2, this.y + this.height/2));
+                    if (!MOBILE_PERF) {
+                        for (let i = 0; i < 8; i++) {
+                            debris.push(new Debris(this.x + this.width/2, this.y + this.height/2));
+                        }
                     }
                 }
             }
@@ -2917,7 +2931,7 @@
         const MOBILE_PERF = isMobileDevice();
 
         const applyRenderScale = () => {
-            RENDER_SCALE = MOBILE_PERF ? 0.75 : 1;
+            RENDER_SCALE = MOBILE_PERF ? 0.65 : 1;
             canvas.width = Math.round(WORLD_WIDTH * RENDER_SCALE);
             canvas.height = Math.round(WORLD_HEIGHT * RENDER_SCALE);
             canvas.style.width = `${WORLD_WIDTH}px`;
@@ -2942,11 +2956,22 @@
         updateCornerControlsVisibility();
         updateMobileControlsVisibility();
 
+        const kickstartViewportSync = () => {
+            let frames = 8;
+            const step = () => {
+                if (frames-- <= 0) return;
+                fitGameToViewport();
+                updateMobileControlsVisibility();
+                requestAnimationFrame(step);
+            };
+            requestAnimationFrame(step);
+        };
+
         const fitGameToViewport = () => {
             if (!gameWrapper || gameWrapper.style.display === 'none') return;
             const baseWidth = WORLD_WIDTH;
             const baseHeight = WORLD_HEIGHT;
-            const margin = 12;
+            const margin = MOBILE_PERF ? 2 : 12;
             const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
             const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
             const availableWidth = Math.max(0, viewportWidth - margin * 2);
@@ -3050,6 +3075,9 @@
                 requestAnimationFrame(fitGameToViewport);
                 setTimeout(fitGameToViewport, 50);
                 setTimeout(updateMobileControlsVisibility, 60);
+                if (MOBILE_PERF) {
+                    kickstartViewportSync();
+                }
             } else {
                 gameWrapper.style.transform = 'scale(1)';
                 resetMobileInputs();
@@ -3180,6 +3208,9 @@
             requestAnimationFrame(fitGameToViewport);
             setTimeout(fitGameToViewport, 120);
             setTimeout(updateMobileControlsVisibility, 140);
+            if (MOBILE_PERF) {
+                kickstartViewportSync();
+            }
         };
 
         const showArcadeTransition = () => {
@@ -3733,7 +3764,9 @@
             debris.forEach(d => d.draw());
             player.draw();
             enemy.draw();
-            ctx.drawImage(sceneForeground, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+            if (!MOBILE_PERF) {
+                ctx.drawImage(sceneForeground, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+            }
             drawHud();
 
             // Debug info
