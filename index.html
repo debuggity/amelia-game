@@ -620,19 +620,24 @@
             }
         }
 
-        @media (max-width: 720px) and (orientation: portrait) {
-            #mobileControls .control-pad {
-                width: 160px;
-                height: 160px;
-                left: calc(env(safe-area-inset-left, 0px) + 12px);
-                bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+        @media (orientation: portrait) {
+            body.mobile-device #mobileControls .control-pad {
+                width: 150px;
+                height: 150px;
+                left: calc(env(safe-area-inset-left, 0px) + 18px);
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
             }
 
-            #mobileControls .attack-pad {
-                width: 170px;
-                height: 170px;
-                right: calc(env(safe-area-inset-right, 0px) + 12px);
-                bottom: calc(env(safe-area-inset-bottom, 0px) + 10px);
+            body.mobile-device #mobileControls .attack-pad {
+                width: 150px;
+                height: 150px;
+                right: calc(env(safe-area-inset-right, 0px) + 18px);
+                bottom: calc(env(safe-area-inset-bottom, 0px) + 22px);
+                gap: 8px;
+            }
+
+            body.mobile-device #mobileControls .attack-button img {
+                width: 68px;
             }
         }
 
@@ -3019,18 +3024,27 @@
             const margin = MOBILE_PERF ? 2 : 12;
             const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
             const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            const isPortrait = viewportHeight >= viewportWidth;
+            let reservedHeight = 0;
+            if (MOBILE_PERF && document.body.classList.contains('mobile-controls') && isPortrait) {
+                const padHeights = [];
+                if (movePad?.offsetHeight) padHeights.push(movePad.offsetHeight);
+                if (attackPad?.offsetHeight) padHeights.push(attackPad.offsetHeight);
+                const maxPad = padHeights.length ? Math.max(...padHeights) : 180;
+                reservedHeight = maxPad + 14;
+            }
             const availableWidth = Math.max(0, viewportWidth - margin * 2);
             const scaleByWidth = Math.min(1, availableWidth / baseWidth);
 
             const heightThreshold = baseHeight * 1.5;
             let scaleByHeight = 1;
-            if (viewportHeight < heightThreshold) {
-                const availableHeight = Math.max(0, viewportHeight - margin * 2);
+            if (viewportHeight < heightThreshold || reservedHeight > 0) {
+                const availableHeight = Math.max(0, viewportHeight - margin * 2 - reservedHeight);
                 scaleByHeight = availableHeight / baseHeight;
             }
 
             const scale = Math.min(1, scaleByWidth, scaleByHeight);
-            gameWrapper.style.transformOrigin = 'center center';
+            gameWrapper.style.transformOrigin = MOBILE_PERF ? 'top center' : 'center center';
             gameWrapper.style.transform = `scale(${scale})`;
         };
 
