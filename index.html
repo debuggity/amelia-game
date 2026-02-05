@@ -1282,6 +1282,7 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
         
         canvas.width = 1200;
         canvas.height = 600;
@@ -2913,6 +2914,7 @@
             return coarse || touchPoints || uaMatch;
         };
         const MOBILE_PERF = isMobileDevice();
+        let mobileFrameTick = 0;
 
         const updateMobileControlsVisibility = () => {
             const show = document.body.classList.contains('in-game') && isMobileDevice();
@@ -3036,6 +3038,7 @@
             }
             if (inGame) {
                 requestAnimationFrame(fitGameToViewport);
+                setTimeout(fitGameToViewport, 50);
             } else {
                 gameWrapper.style.transform = 'scale(1)';
                 resetMobileInputs();
@@ -3155,6 +3158,8 @@
             applyDifficulty(currentDifficulty);
             startRound();
             setScreen('game');
+            requestAnimationFrame(fitGameToViewport);
+            setTimeout(fitGameToViewport, 120);
         };
 
         const showArcadeTransition = () => {
@@ -3648,6 +3653,9 @@
                 requestAnimationFrame(gameLoop);
                 return;
             }
+            if (MOBILE_PERF) {
+                mobileFrameTick = (mobileFrameTick + 1) % 2;
+            }
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -3699,6 +3707,11 @@
             });
             if (MOBILE_PERF && debris.length > 40) {
                 debris.splice(0, debris.length - 40);
+            }
+
+            if (MOBILE_PERF && mobileFrameTick === 1) {
+                requestAnimationFrame(gameLoop);
+                return;
             }
 
             // Draw everything
