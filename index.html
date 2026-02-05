@@ -1284,8 +1284,9 @@
         const ctx = canvas.getContext('2d');
         ctx.imageSmoothingEnabled = false;
         
-        canvas.width = 1200;
-        canvas.height = 600;
+        const WORLD_WIDTH = 1200;
+        const WORLD_HEIGHT = 600;
+        let RENDER_SCALE = 1;
 
         const GRAVITY = 0.35;
         const FALL_GRAVITY_MULTIPLIER = 0.35;
@@ -1761,7 +1762,7 @@
 
                 // Keep in bounds
                 if (this.x < 0) this.x = 0;
-                if (this.x > canvas.width - this.width) this.x = canvas.width - this.width;
+                if (this.x > WORLD_WIDTH - this.width) this.x = WORLD_WIDTH - this.width;
 
                 // Update hitboxes
                 this.updateHitboxes(objects);
@@ -2032,7 +2033,7 @@
                     const origin = source.owner ? source.owner : source;
                     let direction = origin.x < this.x ? 1 : -1;
                     const nearLeftWall = this.x < 40;
-                    const nearRightWall = this.x > canvas.width - this.width - 40;
+                    const nearRightWall = this.x > WORLD_WIDTH - this.width - 40;
                     const ignoreWallFlip = source.isProjectile === true;
                     if (!ignoreWallFlip) {
                         if (nearLeftWall && direction < 0) direction = 1;
@@ -2162,7 +2163,7 @@
                 const strikeRangeGroundStarmer = inFront && absDx < 160;
                 const strikeRangeAir = inFront && absDx < 180 && dy < 80;
                 const nearLeftWall = this.x < 40;
-                const nearRightWall = this.x > canvas.width - this.width - 40;
+                const nearRightWall = this.x > WORLD_WIDTH - this.width - 40;
                 const cornered = (nearLeftWall || nearRightWall) && absDistance < 160;
                 const playerAttacking = player.animationLocked || player.hitboxes.length > 0 || player.holdHitbox;
                 const playerHitThreat = player.hitboxes.length > 0 || player.holdHitbox;
@@ -2553,7 +2554,7 @@
                 this.x += this.velocityX;
                 this.lifetime--;
 
-                if (this.lifetime <= 0 || this.x < 0 || this.x > canvas.width) {
+                if (this.lifetime <= 0 || this.x < 0 || this.x > WORLD_WIDTH) {
                     this.active = false;
                 }
 
@@ -2914,7 +2915,16 @@
             return coarse || touchPoints || uaMatch;
         };
         const MOBILE_PERF = isMobileDevice();
-        let mobileFrameTick = 0;
+
+        const applyRenderScale = () => {
+            RENDER_SCALE = MOBILE_PERF ? 0.75 : 1;
+            canvas.width = Math.round(WORLD_WIDTH * RENDER_SCALE);
+            canvas.height = Math.round(WORLD_HEIGHT * RENDER_SCALE);
+            canvas.style.width = `${WORLD_WIDTH}px`;
+            canvas.style.height = `${WORLD_HEIGHT}px`;
+            ctx.imageSmoothingEnabled = false;
+        };
+        applyRenderScale();
 
         const updateMobileControlsVisibility = () => {
             const show = document.body.classList.contains('in-game') && isMobileDevice();
@@ -2934,8 +2944,8 @@
 
         const fitGameToViewport = () => {
             if (!gameWrapper || gameWrapper.style.display === 'none') return;
-            const baseWidth = canvas.width;
-            const baseHeight = canvas.height;
+            const baseWidth = WORLD_WIDTH;
+            const baseHeight = WORLD_HEIGHT;
             const margin = 12;
             const viewportWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
             const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
@@ -3039,6 +3049,7 @@
             if (inGame) {
                 requestAnimationFrame(fitGameToViewport);
                 setTimeout(fitGameToViewport, 50);
+                setTimeout(updateMobileControlsVisibility, 60);
             } else {
                 gameWrapper.style.transform = 'scale(1)';
                 resetMobileInputs();
@@ -3095,7 +3106,15 @@
         if (window.visualViewport) {
             window.visualViewport.addEventListener('resize', fitGameToViewport);
             window.visualViewport.addEventListener('scroll', fitGameToViewport);
+            window.visualViewport.addEventListener('resize', updateMobileControlsVisibility);
+            window.visualViewport.addEventListener('scroll', updateMobileControlsVisibility);
         }
+        window.addEventListener('load', () => {
+            fitGameToViewport();
+            updateMobileControlsVisibility();
+            setTimeout(fitGameToViewport, 80);
+            setTimeout(updateMobileControlsVisibility, 90);
+        });
 
         const setupScaleObservers = () => {
             if (!window.ResizeObserver) return;
@@ -3160,6 +3179,7 @@
             setScreen('game');
             requestAnimationFrame(fitGameToViewport);
             setTimeout(fitGameToViewport, 120);
+            setTimeout(updateMobileControlsVisibility, 140);
         };
 
         const showArcadeTransition = () => {
@@ -3555,12 +3575,12 @@
         function drawHud() {
             ctx.save();
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(0, 0, canvas.width, 70);
+            ctx.fillRect(0, 0, WORLD_WIDTH, 70);
 
             ctx.font = '18px "Courier New", monospace';
             ctx.fillStyle = '#FFD700';
             ctx.textAlign = 'center';
-            ctx.fillText(`ROUND ${currentRound}`, canvas.width / 2, 28);
+            ctx.fillText(`ROUND ${currentRound}`, WORLD_WIDTH / 2, 28);
 
             const faceSize = 38;
             const drawCenteredCrop = (img, dx, dy, size) => {
@@ -3579,7 +3599,7 @@
                 drawCenteredCrop(currentPlayerHeadshot, 20, 10, faceSize);
             }
             if (currentEnemyHeadshot.complete) {
-                drawCenteredCrop(currentEnemyHeadshot, canvas.width - 20 - faceSize, 10, faceSize);
+                drawCenteredCrop(currentEnemyHeadshot, WORLD_WIDTH - 20 - faceSize, 10, faceSize);
             }
 
             const barWidth = 360;
@@ -3592,13 +3612,13 @@
 
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
             ctx.fillRect(70, barY, barWidth, barHeight);
-            ctx.fillRect(canvas.width - 70 - barWidth, barY, barWidth, barHeight);
+            ctx.fillRect(WORLD_WIDTH - 70 - barWidth, barY, barWidth, barHeight);
 
             ctx.fillStyle = playerPct > 0.3 ? '#00FF66' : '#FF3333';
             ctx.fillRect(70, barY, barWidth * playerPct, barHeight);
 
             ctx.fillStyle = enemyPct > 0.3 ? '#FF6666' : '#FF3333';
-            ctx.fillRect(canvas.width - 70 - barWidth * enemyPct, barY, barWidth * enemyPct, barHeight);
+            ctx.fillRect(WORLD_WIDTH - 70 - barWidth * enemyPct, barY, barWidth * enemyPct, barHeight);
 
             for (let i = 0; i < MAX_ROUNDS; i++) {
                 const x = 80 + i * 20;
@@ -3609,7 +3629,7 @@
             }
 
             for (let i = 0; i < MAX_ROUNDS; i++) {
-                const x = canvas.width - 80 - i * 20;
+                const x = WORLD_WIDTH - 80 - i * 20;
                 ctx.fillStyle = i < enemyRounds ? '#FF6666' : 'rgba(255,255,255,0.2)';
                 ctx.beginPath();
                 ctx.arc(x, 50, 6, 0, Math.PI * 2);
@@ -3620,7 +3640,7 @@
                 ctx.font = '16px "Courier New", monospace';
                 ctx.fillStyle = '#FFD700';
                 ctx.textAlign = 'center';
-                ctx.fillText(`SCORE ${Math.max(0, Math.floor(arcadeScore))}`, canvas.width / 2, 54);
+                ctx.fillText(`SCORE ${Math.max(0, Math.floor(arcadeScore))}`, WORLD_WIDTH / 2, 54);
             }
 
             ctx.restore();
@@ -3629,15 +3649,15 @@
         function drawRoundBanner(text, subText = '') {
             ctx.save();
             ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-            ctx.fillRect(0, canvas.height / 2 - 50, canvas.width, 100);
+            ctx.fillRect(0, WORLD_HEIGHT / 2 - 50, WORLD_WIDTH, 100);
             ctx.font = '32px "Courier New", monospace';
             ctx.fillStyle = '#FFFFFF';
             ctx.textAlign = 'center';
-            ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+            ctx.fillText(text, WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
             if (subText) {
                 ctx.font = '16px "Courier New", monospace';
                 ctx.fillStyle = '#FFD700';
-                ctx.fillText(subText, canvas.width / 2, canvas.height / 2 + 24);
+                ctx.fillText(subText, WORLD_WIDTH / 2, WORLD_HEIGHT / 2 + 24);
             }
             ctx.restore();
         }
@@ -3653,14 +3673,12 @@
                 requestAnimationFrame(gameLoop);
                 return;
             }
-            if (MOBILE_PERF) {
-                mobileFrameTick = (mobileFrameTick + 1) % 2;
-            }
+            ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
             // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
             // Draw background
-            ctx.drawImage(sceneImage, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(sceneImage, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
             // Update and draw
             if (!matchOver) {
@@ -3701,17 +3719,12 @@
             
             debris.forEach((d, index) => {
                 d.update();
-                if (d.lifetime <= 0 || d.y > canvas.height) {
+                if (d.lifetime <= 0 || d.y > WORLD_HEIGHT) {
                     debris.splice(index, 1);
                 }
             });
             if (MOBILE_PERF && debris.length > 40) {
                 debris.splice(0, debris.length - 40);
-            }
-
-            if (MOBILE_PERF && mobileFrameTick === 1) {
-                requestAnimationFrame(gameLoop);
-                return;
             }
 
             // Draw everything
@@ -3720,7 +3733,7 @@
             debris.forEach(d => d.draw());
             player.draw();
             enemy.draw();
-            ctx.drawImage(sceneForeground, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(sceneForeground, 0, 0, WORLD_WIDTH, WORLD_HEIGHT);
             drawHud();
 
             // Debug info
@@ -3815,3 +3828,4 @@
     </script>
 </body>
 </html>
+
