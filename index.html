@@ -83,6 +83,7 @@
             position: relative;
             width: 1200px;
             height: 600px;
+            z-index: 2;
         }
 
         #uiRoot {
@@ -92,6 +93,7 @@
             align-items: center;
             justify-content: center;
             pointer-events: none;
+            z-index: 2;
         }
 
         #heartsLayer {
@@ -102,6 +104,7 @@
             display: none;
             z-index: 0;
         }
+
 
         body.bg-hearts #heartsLayer {
             display: block;
@@ -133,6 +136,7 @@
             color: white;
             pointer-events: auto;
         }
+
 
         .screen.active {
             display: flex;
@@ -190,6 +194,7 @@
             padding: 0;
             transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
         }
+
 
         .menu-button img,
         .select-button img,
